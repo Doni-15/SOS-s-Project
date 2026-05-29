@@ -1,20 +1,53 @@
-import './App.css'
+import './App.css';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { CartProvider } from './context/CartContext';
+import { Navbar } from './components/Navbar';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { UserPage } from './pages/UserPage';
+import { LoginPage } from './pages/LoginPage';
+import { CheckoutPage } from './pages/CheckoutPage';
+import { KasirPage } from './pages/KasirPage';
+import { OwnerPage } from './pages/OwnerPage';
 
 function App() {
   return (
-    <div className="min-h-screen bg-slate-100 flex items-center justify-center">
-      <div className="rounded-2xl bg-white p-8 shadow-lg">
-        <h1 className="text-3xl font-bold text-slate-900">
-          Self-Order System
-        </h1>
-        <p className="mt-2 text-slate-500">
-          React + Vite + Tailwind siap dipakai.
-        </p>
-        <button className="mt-5 rounded-xl bg-orange-500 px-5 py-3 font-semibold text-white hover:bg-orange-600">
-          Powerred By: MBG - Mas Bahlil Ganteng.
-        </button>
-      </div>
-    </div>
+    <Router>
+      <AuthProvider>
+        <CartProvider>
+          <Navbar />
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<UserPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
+
+            {/* Protected Routes - Kasir */}
+            <Route
+              path="/kasir"
+              element={
+                <ProtectedRoute requiredRole="kasir">
+                  <KasirPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Protected Routes - Owner */}
+            <Route
+              path="/owner"
+              element={
+                <ProtectedRoute requiredRole="owner">
+                  <OwnerPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Fallback Route */}
+            <Route path="*" element={<UserPage />} />
+          </Routes>
+        </CartProvider>
+      </AuthProvider>
+    </Router>
   );
 }
 
