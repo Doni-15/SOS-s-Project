@@ -2,7 +2,7 @@ import { X, Minus, Plus, ShoppingCart } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useNavigate } from 'react-router-dom';
 
-export const CartDrawer = ({ isOpen, onClose }) => {
+export const CartDrawer = ({ isOpen, onClose, disableOverlay = false }) => {
   const { cartItems, removeFromCart, updateQuantity, getTotalPrice } = useCart();
   const navigate = useNavigate();
 
@@ -14,7 +14,7 @@ export const CartDrawer = ({ isOpen, onClose }) => {
   return (
     <>
       {/* Overlay */}
-      {isOpen && (
+      {isOpen && !disableOverlay && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-30"
           onClick={onClose}

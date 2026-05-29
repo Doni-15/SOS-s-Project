@@ -119,85 +119,89 @@ export const UserPage = () => {
   }, [searchTerm, selectedCategory]);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header */}
-      <div className="bg-blue-600 text-white sticky top-16 z-40 px-4 py-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-xl font-bold mb-4">Pilih menu favorit Anda</h1>
-
-          {/* Search Bar */}
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-3.5 text-gray-400" size={20} />
-            <input
-              type="text"
-              placeholder="Cari menu..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-          </div>
-
-          {/* Category Filter */}
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-full font-semibold transition whitespace-nowrap ${
-                  selectedCategory === category
-                    ? 'bg-white text-blue-600'
-                    : 'bg-blue-500 text-white hover:bg-blue-400'
-                }`}
-              >
-                {category === 'Makanan' && '🍽️ '}
-                {category === 'Minuman' && '🥤 '}
-                {category === 'Snack' && '🍿 '}
-                {category}
-              </button>
-            ))}
+    <div className="grid grid-cols gap-4 ">
+      <div className="min-h-screen bg-gray-50 pb-20">
+        {/* Header */}
+        <div className="bg-blue-600 text-white  top-16 z-40 px-4 py-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            <h1 className="text-xl font-bold mb-4">Pilih menu favorit Anda</h1>
+  
+            {/* Search Bar */}
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-3.5 text-gray-400" size={20} />
+              <input
+                type="text"
+                placeholder="Cari menu..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
+            </div>
+  
+            {/* Category Filter */}
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`px-4 py-2 rounded-full font-semibold transition whitespace-nowrap ${
+                    selectedCategory === category
+                      ? 'bg-white text-blue-600'
+                      : 'bg-blue-500 text-white hover:bg-blue-400'
+                  }`}
+                >
+                  {category === 'Makanan' && '🍽️ '}
+                  {category === 'Minuman' && '🥤 '}
+                  {category === 'Snack' && '🍿 '}
+                  {category}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* Cart Floating Button (Mobile) */}
-      {getTotalItems() > 0 && (
-        <button
-          onClick={() => setCartDrawerOpen(true)}
-          className="fixed bottom-6 right-6 sm:hidden bg-blue-600 text-white rounded-full w-16 h-16 flex items-center justify-center shadow-lg font-bold text-lg hover:bg-blue-700 transition"
-        >
-          🛒 {getTotalItems()}
-        </button>
-      )}
-
-      {/* Menu Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {filteredMenu.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredMenu.map((item) => (
-              <MenuItem key={item.id} item={item} />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg font-semibold">
-              Menu tidak ditemukan
-            </p>
-            <p className="text-gray-400 text-sm mt-2">
-              Coba ubah filter atau kata kunci pencarian
-            </p>
-          </div>
+  
+        {/* Cart Floating Button (Mobile) */}
+        {getTotalItems() > 0 && (
+          <button
+            onClick={() => setCartDrawerOpen(true)}
+            className="fixed bottom-6 right-6 sm:hidden bg-blue-600 text-white rounded-full w-16 h-16 flex items-center justify-center shadow-lg font-bold text-lg hover:bg-blue-700 transition z-50"
+          >
+            🛒 {getTotalItems()}
+          </button>
         )}
+  
+        {/* Menu Grid */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {filteredMenu.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredMenu.map((item) => (
+                <MenuItem key={item.id} item={item} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-gray-500 text-lg font-semibold">
+                Menu tidak ditemukan
+              </p>
+              <p className="text-gray-400 text-sm mt-2">
+                Coba ubah filter atau kata kunci pencarian
+              </p>
+            </div>
+          )}
+        </div>
+  
+        {/* Cart Drawer */}
+        <CartDrawer
+          isOpen={cartDrawerOpen}
+          onClose={() => setCartDrawerOpen(false)}
+        />
       </div>
 
-      {/* Cart Drawer */}
-      <CartDrawer
-        isOpen={cartDrawerOpen}
-        onClose={() => setCartDrawerOpen(false)}
-      />
-
-      {/* Desktop Cart Sidebar */}
-      <div className="hidden sm:fixed sm:bottom-0 sm:right-0 sm:top-16 sm:w-96 sm:bg-gray-100 sm:border-l sm:border-gray-300 sm:flex sm:flex-col sm:block">
-        <CartDrawer isOpen={true} onClose={() => {}} />
+      <div className="min-h-screen bg-gray-50 pb-20">
+        {/* Desktop Cart Sidebar */}
+        <div className="hidden sm:fixed sm:bottom-0 sm:right-0 sm:top-16 sm:w-96 sm:bg-gray-100 sm:border-l sm:border-gray-300 sm:flex sm:flex-col sm:block">
+          <CartDrawer isOpen={true} onClose={() => {}} disableOverlay={true} />
+        </div>
       </div>
     </div>
   );
