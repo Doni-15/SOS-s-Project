@@ -11,9 +11,9 @@ export const MenuItem = ({ item }) => {
   const isAvailable = item.stock > 0;
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition h-full flex flex-col">
-      {/* Image */}
-      <div className="relative w-full h-40 overflow-hidden bg-gray-200">
+    <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow flex flex-row sm:flex-row gap-4 p-4 h-full">
+      {/* Image - Left on desktop, top on mobile */}
+      <div className="relative w-24 h-24 sm:w-32 sm:h-32 shrink-0 overflow-hidden bg-gray-200 rounded-lg">
         <img
           src={item.image || 'https://via.placeholder.com/200x200?text=No+Image'}
           alt={item.name}
@@ -21,17 +21,31 @@ export const MenuItem = ({ item }) => {
         />
         {!isAvailable && (
           <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <span className="text-white font-bold text-lg">Habis</span>
+            <span className="text-white font-bold text-sm">Habis</span>
           </div>
         )}
       </div>
 
-      {/* Content */}
-      <div className="p-4 flex flex-col flex-grow">
-        {/* Title and Category */}
-        <div className="flex justify-between items-start gap-2 mb-1">
-          <h3 className="font-bold text-gray-800 flex-grow">{item.name}</h3>
-          <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap font-semibold ${
+      {/* Content - Right on desktop, below on mobile */}
+      <div className="flex flex-col sm:flex-col grow w-full">
+        {/* Header: Title, Category Badge, Bestseller Badge */}
+        <div className="flex items-start gap-2 mb-1 flex-wrap">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-gray-800 text-sm sm:text-base truncate">
+              {item.name}
+            </h3>
+          </div>
+          {item.isBestseller && (
+            <span className="inline-flex items-center gap-1 bg-orange-100 text-orange-700 text-xs px-2 py-0.5 rounded-full font-semibold shrink-0">
+              🔥 Paling Laris
+            </span>
+          )}
+        </div>
+
+        {/* Category and Status */}
+        <div className="flex items-center gap-2 mb-2 flex-wrap text-xs">
+          <span className="text-gray-600">{item.category}</span>
+          <span className={`px-2 py-0.5 rounded-full font-semibold ${
             isAvailable
               ? 'bg-green-100 text-green-700'
               : 'bg-red-100 text-red-700'
@@ -40,36 +54,36 @@ export const MenuItem = ({ item }) => {
           </span>
         </div>
 
-        {/* Description */}
-        <p className="text-xs text-gray-600 mb-3 line-clamp-2">
-          {item.description || 'Makanan lezat yang menggugah selera'}
+        {/* Description - One line max */}
+        <p className="text-xs text-gray-600 mb-2 line-clamp-1">
+          {item.description}
         </p>
 
-        {/* Price and Stock Info */}
-        <div className="flex justify-between items-center mb-3 mt-auto">
-          <div>
-            <p className="text-lg font-bold text-orange-600">
-              Rp {item.price.toLocaleString('id-ID')}
-            </p>
-            {isAvailable && (
-              <p className="text-xs text-gray-500">Stok: {item.stock}</p>
-            )}
-          </div>
+        {/* Price */}
+        <div className="flex items-center gap-2 mb-2 flex-wrap">
+          <p className="text-base sm:text-lg font-bold text-orange-600">
+            Rp {item.price.toLocaleString('id-ID')}
+          </p>
         </div>
 
-        {/* Add to Cart Button */}
-        <button
-          onClick={handleAddToCart}
-          disabled={!isAvailable}
-          className={`w-full py-2 rounded-lg font-semibold flex items-center justify-center gap-2 transition ${
-            isAvailable
-              ? 'bg-blue-600 text-white hover:bg-blue-700'
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-          }`}
-        >
-          <Plus size={18} />
-          Tambah
-        </button>
+        {/* Stock and Button Row */}
+        <div className="flex items-center justify-between gap-2 mt-auto">
+          {isAvailable && item.stock && (
+            <p className="text-xs text-gray-500">Stok: {item.stock}</p>
+          )}
+          <button
+            onClick={handleAddToCart}
+            disabled={!isAvailable}
+            className={`ml-auto py-1.5 px-3 rounded-lg font-semibold flex items-center justify-center gap-1 transition text-xs sm:text-sm whitespace-nowrap ${
+              isAvailable
+                ? 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
+          >
+            <Plus size={16} />
+            Tambah
+          </button>
+        </div>
       </div>
     </div>
   );
