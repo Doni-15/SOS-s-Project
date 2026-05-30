@@ -3,17 +3,24 @@ import { Menu, X, LogOut, ShoppingCart as CartIcon, LogIn } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { useCartDrawer } from '../context/CartDrawerContext';
 
 export const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, logout, isAuthenticated } = useAuth();
   const { getTotalItems } = useCart();
+  const { closeCart } = useCartDrawer();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
+    closeCart();
     navigate('/');
     setMobileMenuOpen(false);
+  };
+
+  const handleLogoClick = () => {
+    closeCart();
   };
 
   return (
@@ -21,11 +28,11 @@ export const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 font-bold text-lg">
+          <Link to="/" onClick={handleLogoClick} className="flex items-center gap-2 font-bold text-lg">
             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-blue-600 font-bold">
               🍽
             </div>
-            <span className="hidden sm:inline">Resto Nusantara</span>
+            <span className="sm:inline mx-2">Resto Nusantara</span>
           </Link>
 
           {/* Desktop Menu */}
@@ -158,7 +165,7 @@ export const Navbar = () => {
             ) : (
               <Link
                 to="/login"
-                className="block py-2 px-4 hover:bg-green-500 rounded transition mt-2 flex items-center gap-2"
+                className="py-2 px-4 hover:bg-green-500 rounded transition mt-2 flex items-center gap-2"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <LogIn size={18} />
