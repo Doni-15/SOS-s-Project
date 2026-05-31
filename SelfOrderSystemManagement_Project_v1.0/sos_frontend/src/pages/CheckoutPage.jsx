@@ -12,6 +12,7 @@ export const CheckoutPage = () => {
     tableNumber: '',
     notes: '',
     paymentMethod: 'cash',
+    orderType: 'dine-in',
   });
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
@@ -88,12 +89,16 @@ export const CheckoutPage = () => {
         orderId: `ORD-${Date.now()}`,
         customerName: formData.customerName,
         phone: formData.phone,
-        tableNumber: formData.tableNumber || '-',
+        tableNumber: formData.orderType === 'dine-in'
+          ? (formData.tableNumber || '-')
+          : `Antrian-${Date.now().toString().slice(-4)}`,
+        orderType: formData.orderType,
         items: cartItems,
         totalPrice: getTotalPrice(),
         paymentMethod: formData.paymentMethod,
         notes: formData.notes,
         timestamp: new Date().toISOString(),
+        status: 'pending',
       };
 
       // Simpan ke localStorage (untuk kasir nanti bisa print)
@@ -181,10 +186,42 @@ export const CheckoutPage = () => {
                   />
                 </div>
 
-                {/* Table Number */}
+                {/* Order Type Toggle */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Nomor Meja (Opsional)
+                    Tipe Pesanan *
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setFormData((p) => ({ ...p, orderType: 'dine-in' }))}
+                      className={`flex items-center justify-center gap-2 py-3 rounded-xl border-2 font-semibold text-sm transition ${
+                        formData.orderType === 'dine-in'
+                          ? 'border-blue-600 bg-blue-50 text-blue-700'
+                          : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                      }`}
+                    >
+                      🍽️ Dine In
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData((p) => ({ ...p, orderType: 'take-away', tableNumber: '' }))}
+                      className={`flex items-center justify-center gap-2 py-3 rounded-xl border-2 font-semibold text-sm transition ${
+                        formData.orderType === 'take-away'
+                          ? 'border-purple-600 bg-purple-50 text-purple-700'
+                          : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                      }`}
+                    >
+                      🛍️ Take Away
+                    </button>
+                  </div>
+                </div>
+
+                {/* Table Number — only for Dine In */}
+                {formData.orderType === 'dine-in' && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Nomor Meja *
                   </label>
                   <input
                     type="text"
@@ -196,6 +233,7 @@ export const CheckoutPage = () => {
                     disabled={isProcessing}
                   />
                 </div>
+                )}
 
                 {/* Payment Method */}
                 <div>

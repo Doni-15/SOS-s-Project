@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LogOut } from 'lucide-react';
+import { LogOut, ChefHat } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { OrderList }      from '../components/OrderList';
@@ -22,6 +22,10 @@ export const KasirPage = () => {
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState('orders');
+  const [selectedTable, setSelectedTable] = useState(() => {
+    const saved = localStorage.getItem('selectedTable');
+    return saved ? parseInt(saved) : null;
+  });
 
   const [orders, setOrders] = useState(() => {
     const saved = localStorage.getItem('orders');
@@ -38,28 +42,42 @@ export const KasirPage = () => {
     navigate('/login');
   };
 
+  const handleSelectTable = (tableNumber) => {
+    setSelectedTable(tableNumber);
+    localStorage.setItem('selectedTable', tableNumber.toString());
+  };
+
+  const handleClearTable = () => {
+    setSelectedTable(null);
+    localStorage.removeItem('selectedTable');
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 shadow-lg">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
+    <div className="min-h-screen bg-gray-50 pb-6">
+      {/* Header with Table Info */}
+      {/* <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 shadow-lg relative z-10">
+        <div className="max-w-7xl mx-auto flex justify-between items-center flex-wrap gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Dashboard Kasir</h1>
-            <p className="text-blue-100">Selamat datang, {user?.username}!</p>
+            <div className="flex items-center gap-2 mb-2">
+              <ChefHat size={24} />
+              <h1 className="text-3xl font-bold">Dashboard Kasir</h1>
+            </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 bg-red-500 hover:bg-red-600 px-5 py-2.5 rounded-lg font-semibold transition"
-          >
-            <LogOut size={18} />
-            Logout
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 bg-red-500 hover:bg-red-600 px-5 py-2.5 rounded-lg font-semibold transition"
+            >
+              <LogOut size={18} />
+              Logout
+            </button>
+          </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Tabs */}
-      <div className="max-w-7xl mx-auto">
-        <div className="flex gap-0 border-b border-gray-300">
+      <div className="bg-white border-b border-gray-300 sticky top-20 z-20">
+        <div className="max-w-7xl mx-auto flex gap-0">
           {TABS.map(({ key, label }) => (
             <button
               key={key}
@@ -81,7 +99,7 @@ export const KasirPage = () => {
       {/* Content */}
       <div className="max-w-7xl mx-auto p-6">
         {activeTab === 'orders'    && <OrderList      orders={orders} />}
-        {activeTab === 'transaksi' && <TransaksiPanel menus={menus} orders={orders} setOrders={setOrders} />}
+        {activeTab === 'transaksi' && <TransaksiPanel menus={menus} orders={orders} setOrders={setOrders} tableNumber={selectedTable} />}
         {activeTab === 'menu'      && <MenuManager    menus={menus}  setMenus={setMenus} />}
       </div>
     </div>

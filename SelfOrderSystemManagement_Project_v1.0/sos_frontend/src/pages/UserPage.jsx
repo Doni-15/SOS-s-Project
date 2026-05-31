@@ -137,19 +137,19 @@ export const UserPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-blue-600 text-white px-4 py-1 sm:px-6 lg:px-8">
+      <div className="sticky top-20 z-30 bg-blue-600 text-white px-4 py-4 sm:px-6 lg:px-8 shadow-md">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-xl font-bold mb-4">Pilih menu favorit Anda</h1>
 
           {/* Search Bar */}
           <div className="relative mb-4">
-            <Search className="absolute left-3 top-1.5 text-gray-400" size={20} />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
               placeholder="Cari menu..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full max-w-2xl pl-10 pr-4 py-1 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full max-w-2xl pl-10 pr-4 py-2 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
 
@@ -159,7 +159,7 @@ export const UserPage = () => {
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-1 rounded-full font-semibold transition whitespace-nowrap ${
+                className={`px-4 py-2 rounded-full font-semibold transition whitespace-nowrap text-sm ${
                   selectedCategory === category
                     ? 'bg-white text-blue-600'
                     : 'bg-blue-500 text-white hover:bg-blue-400'

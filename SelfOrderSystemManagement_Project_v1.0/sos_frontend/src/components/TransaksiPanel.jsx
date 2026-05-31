@@ -9,7 +9,8 @@ const PAY_METHODS = [
   { value: 'card',  label: '💳 Kartu'  },
 ];
 
-export const TransaksiPanel = ({ menus, orders, setOrders }) => {
+export const TransaksiPanel = ({ menus, orders, setOrders, mode = 'dine-in' }) => {
+  const isTakeaway = mode === 'takeaway';
   const [search, setSearch]       = useState('');
   const [category, setCategory]   = useState('Semua');
   const [cart, setCart]           = useState([]);
@@ -66,13 +67,17 @@ export const TransaksiPanel = ({ menus, orders, setOrders }) => {
   /* ── Save ── */
   const save = () => {
     if (cart.length === 0)              { alert('Keranjang kosong!'); return; }
-    if (!table.trim())                  { alert('Nomor meja harus diisi!'); return; }
+    if (!table.trim())                  {
+      alert(isTakeaway ? 'Nama pelanggan harus diisi!' : 'Nomor meja harus diisi!');
+      return;
+    }
     if (payMethod === 'cash' && cashNum < total) { alert('Uang yang diberikan kurang!'); return; }
 
     const order = {
       orderId:       `ORD-${Date.now()}`,
-      customerName:  `Meja ${table}`,
-      tableNumber:   table,
+      customerName:  isTakeaway ? table : `Meja ${table}`,
+      tableNumber:   isTakeaway ? `Antrian-${Date.now().toString().slice(-4)}` : table,
+      orderType:     isTakeaway ? 'take-away' : 'dine-in',
       paymentMethod: payMethod,
       items:         cart.map((i) => ({ id: i.id, name: i.name, price: i.price, quantity: i.qty })),
       subtotal, tax, serviceCharge: service,
@@ -80,6 +85,7 @@ export const TransaksiPanel = ({ menus, orders, setOrders }) => {
       cashPaid:      payMethod === 'cash' ? cashNum : total,
       change:        payMethod === 'cash' ? change : 0,
       notes:         note,
+      status:        'pending',
       timestamp:     new Date().toISOString(),
     };
 
@@ -275,12 +281,14 @@ export const TransaksiPanel = ({ menus, orders, setOrders }) => {
 
         {/* Form input */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-3">
-          {/* Nomor Meja */}
+          {/* Nomor Meja / Nama Pelanggan */}
           <div>
-            <label className="text-xs font-semibold text-gray-600 mb-1 block">Nomor Meja *</label>
+            <label className="text-xs font-semibold text-gray-600 mb-1 block">
+              {isTakeaway ? 'Nama Pelanggan *' : 'Nomor Meja *'}
+            </label>
             <input
               type="text"
-              placeholder="Contoh: 1, A5, VIP-2"
+              placeholder={isTakeaway ? 'Contoh: Budi' : 'Contoh: 1, A5, VIP-2'}
               value={table}
               onChange={(e) => setTable(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"

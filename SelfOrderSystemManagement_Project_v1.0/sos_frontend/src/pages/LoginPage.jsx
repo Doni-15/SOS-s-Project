@@ -1,4 +1,4 @@
-import { Shield } from 'lucide-react';
+// import { Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useState } from 'react';
@@ -6,7 +6,7 @@ import { useState } from 'react';
 export const LoginPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('kasir');
+  // const [role, setRole] = useState('kasir');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
@@ -52,25 +52,28 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center px-4">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+    <div className="min-h-screen flex flex-row">
+      <div className="bg-gradient-to-br from-blue-600 to-blue-800 w-full">
+        
+      </div> 
+      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full allign-center">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <div className="bg-blue-600 p-4 rounded-full">
-              <Shield size={32} className="text-white" />
+        <div className="mb-2">
+          <div className="justify-center">
+            <div className="bg-blue-600 p-2 rounded-full ">
+              🍽
             </div>
+            <h1 className="text-3xl font-bold text-gray-800 mb-1 mx-2">
+              Resto Nusantara
+            </h1>
           </div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            Resto Nusantara
-          </h1>
-          <p className="text-gray-600">Akses Admin Panel</p>
+
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Role Selection */}
-          <div className="grid grid-cols-2 gap-3 mb-6">
+          {/* <div className="grid grid-cols-2 gap-3 mb-2">
             <label
               className={`p-3 rounded-lg border-2 cursor-pointer transition text-center font-semibold ${
                 role === 'kasir'
@@ -103,18 +106,18 @@ export const LoginPage = () => {
               />
               👔 Owner
             </label>
-          </div>
+          </div> */}
 
           {/* Username */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
               Username
             </label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200 transition"
+              className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200 transition"
               placeholder="Masukkan username"
               disabled={isLoading}
             />
@@ -122,14 +125,14 @@ export const LoginPage = () => {
 
           {/* Password */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
               Password
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200 transition"
+              className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200 transition"
               placeholder="Masukkan password"
               disabled={isLoading}
             />
@@ -152,7 +155,7 @@ export const LoginPage = () => {
           </button>
 
           {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          {/* <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
             <p className="text-xs font-semibold text-gray-600 mb-2">
               📝 Demo Credentials:
             </p>
@@ -162,7 +165,7 @@ export const LoginPage = () => {
             <p className="text-xs text-gray-600">
               <strong>Owner:</strong> owner / pass456
             </p>
-          </div>
+          </div> */}
         </form>
 
         {/* Footer */}
