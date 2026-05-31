@@ -137,7 +137,7 @@ export const UserPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
-      <div className="sticky top-20 z-30 bg-blue-600 text-white px-4 py-4 sm:px-6 lg:px-8 shadow-md">
+      <div className=" top-20 z-30 bg-blue-600 text-white px-4 py-4 sm:px-6 lg:px-8 shadow-md">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-xl font-bold mb-4">Pilih menu favorit Anda</h1>
 

@@ -29,9 +29,9 @@ export const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
             <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">
               🍽
             </div>
-            <div className="hidden sm:flex flex-col">
-              <span className="text-sm font-bold text-gray-800">Kedai</span>
-              <span className="text-xs text-gray-600">Nusantara</span>
+            <div className="sm:flex flex-row gap-1 ">
+              <span className="text-2xl font-bold text-gray-800">Kedai</span>
+              <span className="text-2xl text-gray-600">Nusantara</span>
             </div>
           </div>
         </div>
