@@ -31,13 +31,31 @@ export const OrderList = ({ orders }) => {
               <div>
                 <p className="text-xs text-gray-500 uppercase tracking-wide">Order ID</p>
                 <p className="font-bold text-gray-800 font-mono text-sm">{order.orderId}</p>
+                <div className="flex gap-1.5 mt-1 flex-wrap">
+                  {/* Type Badge */}
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
+                    (order.orderType || 'dine-in') === 'dine-in'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'bg-purple-100 text-purple-700'
+                  }`}>
+                    {(order.orderType || 'dine-in') === 'dine-in' ? '🍽️ Dine In' : '🛍️ Take Away'}
+                  </span>
+                  {/* Status Badge */}
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
+                    (order.status || 'pending') === 'pending'
+                      ? 'bg-yellow-100 text-yellow-700'
+                      : 'bg-green-100 text-green-700'
+                  }`}>
+                    {(order.status || 'pending') === 'pending' ? '⏳ Pending' : '✅ Selesai'}
+                  </span>
+                </div>
               </div>
               <div>
                 <p className="text-xs text-gray-500 uppercase tracking-wide">Nama / Meja</p>
                 <p className="font-bold text-gray-800">{order.customerName}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">No. Meja</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">No. Meja / Antrian</p>
                 <p className="font-bold text-gray-800">{order.tableNumber}</p>
               </div>
               <div>

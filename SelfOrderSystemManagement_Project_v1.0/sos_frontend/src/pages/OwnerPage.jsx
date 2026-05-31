@@ -1,11 +1,11 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { LogOut, TrendingUp } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+// import { LogOut, TrendingUp } from 'lucide-react';
+// import { useAuth } from '../context/AuthContext';
+// import { useNavigate } from 'react-router-dom';
 
 export const OwnerPage = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  // const { user, logout } = useAuth();
+  // const navigate = useNavigate();
 
   // Simulasi data dari orders
   const orders = JSON.parse(localStorage.getItem('orders') || '[]');
@@ -51,27 +51,18 @@ export const OwnerPage = () => {
     '#8b5cf6',
   ];
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  // const handleLogout = () => {
+  //   logout();
+  //   navigate('/login');
+  // };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-green-600 to-green-700 text-white p-6 shadow-lg">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold">Dashboard Owner</h1>
-            <p className="text-green-100">Selamat datang, {user?.username}!</p>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 bg-red-500 hover:bg-red-600 px-6 py-2 rounded-lg font-semibold transition"
-          >
-            <LogOut size={20} />
-            Logout
-          </button>
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 shadow-lg relative z-10">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-3xl font-bold">Dashboard Owner</h1>
+          <p className="text-blue-100 mt-1">Pantau performa bisnis Anda secara real-time</p>
         </div>
       </div>
 
