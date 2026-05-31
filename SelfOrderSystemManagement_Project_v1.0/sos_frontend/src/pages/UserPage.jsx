@@ -188,10 +188,27 @@ export const UserPage = () => {
               🛒 {getTotalItems()}
             </button>
           )}
+          
+          {/* Recommendation Section */}
+          {selectedCategory === 'Semua' && (
+            <div className="mt-12 shadow-md mb-3">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                ⭐ Menu Populer
+              </h2>
+              <div className="space-y-3">
+                {recommendedItems.map((item) => (
+                  <MenuItem key={item.id} item={item} />
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Menu List */}
           {filteredMenu.length > 0 ? (
-            <div className="space-y-2">
+            <div className="space-y-2 my-3">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                Menu 
+              </h2>
               {filteredMenu.map((item) => (
                 <MenuItem key={item.id} item={item} />
               ))}
@@ -204,20 +221,6 @@ export const UserPage = () => {
               <p className="text-gray-400 text-sm mt-2">
                 Coba ubah filter atau kata kunci pencarian
               </p>
-            </div>
-          )}
-
-          {/* Recommendation Section */}
-          {selectedCategory === 'Semua' && (
-            <div className="mt-12">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                ⭐ Menu Populer
-              </h2>
-              <div className="space-y-3">
-                {recommendedItems.map((item) => (
-                  <MenuItem key={item.id} item={item} />
-                ))}
-              </div>
             </div>
           )}
         </div>
