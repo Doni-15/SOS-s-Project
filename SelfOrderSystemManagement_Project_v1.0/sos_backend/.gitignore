@@ -1,0 +1,34 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build output
+dist/
+build/
+coverage/
+generated/
+.generated/
+
+# Runtime backups
+backups/*
+!backups/.gitkeep
+
+# Test results / local reports
+test-results/
+
+# Runtime uploads
+public/uploads/*
+!public/uploads/.gitkeep
+!public/uploads/menu-items/
+public/uploads/menu-items/*
+!public/uploads/menu-items/.gitkeep
