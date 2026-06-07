@@ -1,3 +1,41 @@
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
 
-# Local private runtime files
-/sos_backend_private_runtime/
+# Environment
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+dist/
+build/
+coverage/
+generated/
+.generated/
+
+# Runtime / local outputs
+test-results/
+backups/
+public/uploads/
+
+# Private academic/internal documents
+docs/
+*.docx
+*.pdf
+*.pptx
+
+# Keep project folders
+!sos_backend/
+!sos_frontend/
