@@ -1,6 +1,7 @@
 import express from "express";
 
 import {
+  createMenuCategoryController,
   createMenuItemController,
   deleteMenuItemController,
   getMenuCategoriesController,
@@ -19,6 +20,12 @@ router.use(authenticate);
 router.use(authorizeRoles("OWNER", "CASHIER"));
 
 router.get("/menu-categories", getMenuCategoriesController);
+router.post(
+  "/menu-categories",
+  authorizeRoles("OWNER"),
+  createMenuCategoryController
+);
+
 router.get("/menu-items", getMenuItemsController);
 router.get("/menu-items/:id", getMenuItemDetailController);
 router.post("/menu-items", createMenuItemController);

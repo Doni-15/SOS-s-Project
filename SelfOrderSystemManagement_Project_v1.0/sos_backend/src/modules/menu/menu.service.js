@@ -1,8 +1,10 @@
 import { prisma } from "../../config/prisma.js";
 import { AppError } from "../../common/errors/AppError.js";
 import {
+  createMenuCategory,
   createMenuItem,
   findCategoryById,
+  findCategoryByName,
   findMenuCategories,
   findMenuItemById,
   findMenuItemByNameAndCategory,
@@ -10,6 +12,18 @@ import {
   softDeleteMenuItem,
   updateMenuItem,
 } from "./menu.repository.js";
+
+const toCategoryResponse = (category) => {
+  return {
+    id: category.id,
+    name: category.name,
+    description: category.description,
+    displayOrder: category.displayOrder,
+    isActive: category.isActive,
+    createdAt: category.createdAt,
+    updatedAt: category.updatedAt,
+  };
+};
 
 const toMenuItemResponse = (item) => {
   return {
@@ -35,14 +49,42 @@ const toMenuItemResponse = (item) => {
 
 export const getMenuCategories = async () => {
   const categories = await findMenuCategories();
+  return categories.map(toCategoryResponse);
+};
 
-  return categories.map((category) => ({
-    id: category.id,
-    name: category.name,
-    description: category.description,
-    displayOrder: category.displayOrder,
-    isActive: category.isActive,
-  }));
+export const addMenuCategory = async ({ payload, user }) => {
+  const duplicate = await findCategoryByName(payload.name);
+
+  if (duplicate) {
+    throw new AppError({
+      statusCode: 409,
+      code: "MENU_CATEGORY_ALREADY_EXISTS",
+      message: "Menu category with the same name already exists",
+    });
+  }
+
+  const createdCategory = await createMenuCategory({
+    name: payload.name,
+    description: payload.description ?? null,
+    displayOrder: payload.displayOrder,
+    isActive: payload.isActive,
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      userId: user.id,
+      action: "MENU_CATEGORY_CREATED",
+      entityType: "menu_category",
+      entityId: createdCategory.id,
+      metadata: {
+        name: createdCategory.name,
+        displayOrder: createdCategory.displayOrder,
+        isActive: createdCategory.isActive,
+      },
+    },
+  });
+
+  return toCategoryResponse(createdCategory);
 };
 
 export const getMenuItems = async (query) => {

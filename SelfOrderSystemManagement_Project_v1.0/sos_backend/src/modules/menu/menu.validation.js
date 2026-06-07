@@ -13,6 +13,17 @@ export const menuItemQuerySchema = z.object({
     }),
 });
 
+export const createMenuCategorySchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "Category name is required")
+    .max(50, "Category name must not exceed 50 characters"),
+  description: z.string().trim().optional().nullable(),
+  displayOrder: z.coerce.number().int().min(0).default(0),
+  isActive: z.boolean().optional().default(true),
+});
+
 export const createMenuItemSchema = z.object({
   categoryId: z.string().uuid("Category ID must be a valid UUID"),
   name: z

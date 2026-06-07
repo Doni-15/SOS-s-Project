@@ -1,10 +1,12 @@
 import { successResponse } from "../../common/responses/apiResponse.js";
 import {
+  createMenuCategorySchema,
   createMenuItemSchema,
   menuItemQuerySchema,
   updateMenuItemSchema,
 } from "./menu.validation.js";
 import {
+  addMenuCategory,
   addMenuItem,
   editMenuItem,
   getMenuCategories,
@@ -21,6 +23,27 @@ export const getMenuCategoriesController = async (req, res, next) => {
       message: "Menu categories retrieved successfully",
       data: {
         categories,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createMenuCategoryController = async (req, res, next) => {
+  try {
+    const payload = createMenuCategorySchema.parse(req.body);
+
+    const category = await addMenuCategory({
+      payload,
+      user: req.user,
+    });
+
+    return successResponse(res, {
+      statusCode: 201,
+      message: "Menu category created successfully",
+      data: {
+        category,
       },
     });
   } catch (error) {

@@ -21,6 +21,23 @@ export const findCategoryById = async (categoryId) => {
   });
 };
 
+export const findCategoryByName = async (name) => {
+  return prisma.menuCategory.findFirst({
+    where: {
+      name: {
+        equals: name,
+        mode: "insensitive",
+      },
+    },
+  });
+};
+
+export const createMenuCategory = async (data) => {
+  return prisma.menuCategory.create({
+    data,
+  });
+};
+
 export const findMenuItemById = async (id) => {
   return prisma.menuItem.findUnique({
     where: { id },
