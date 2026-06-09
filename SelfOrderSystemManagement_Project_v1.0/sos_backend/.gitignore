@@ -32,3 +32,9 @@ public/uploads/*
 !public/uploads/menu-items/
 public/uploads/menu-items/*
 !public/uploads/menu-items/.gitkeep
+
+# Local review / stabilization files
+.stabilize-backups/
+backend_review_*.txt
+backend_env_keys_redacted.txt
+export_backend_for_review.sh

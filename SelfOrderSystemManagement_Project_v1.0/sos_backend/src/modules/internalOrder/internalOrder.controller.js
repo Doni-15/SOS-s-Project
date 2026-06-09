@@ -9,6 +9,7 @@ import {
   cancelOrder,
   getInternalOrderById,
   getInternalOrders,
+  markOrderServed,
 } from "./internalOrder.service.js";
 
 export const getInternalOrdersController = async (req, res, next) => {
@@ -54,6 +55,26 @@ export const acceptOrderController = async (req, res, next) => {
 
     return successResponse(res, {
       message: "Order accepted successfully",
+      data: {
+        order,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const markOrderServedController = async (req, res, next) => {
+  try {
+    const params = orderParamSchema.parse(req.params);
+
+    const order = await markOrderServed({
+      id: params.id,
+      user: req.user,
+    });
+
+    return successResponse(res, {
+      message: "Order marked as served successfully",
       data: {
         order,
       },

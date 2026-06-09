@@ -1,72 +1,48 @@
 import { prisma } from "../../config/prisma.js";
+import {
+  ORDER_LIST_INCLUDE,
+  ORDER_RESPONSE_INCLUDE,
+} from "../../common/repositories/order.includes.js";
 
-const orderInclude = {
-  table: true,
-  orderItems: true,
-  acceptedBy: {
-    select: {
-      id: true,
-      username: true,
-      fullName: true,
-      role: true,
-    },
-  },
-  transaction: true,
-  statusHistories: {
-    orderBy: {
-      createdAt: "asc",
-    },
-    include: {
-      changedByUser: {
-        select: {
-          id: true,
-          username: true,
-          fullName: true,
-          role: true,
-        },
-      },
-    },
-  },
-};
+export const findOrders = async ({
+  status,
+  tableNumber,
+  page = 1,
+  limit = 50,
+} = {}) => {
+  const safePage = Math.max(Number(page) || 1, 1);
+  const safeLimit = Math.min(Math.max(Number(limit) || 50, 1), 200);
+  const skip = (safePage - 1) * safeLimit;
 
-export const findOrders = async ({ status, tableNumber, limit }) => {
-  return prisma.order.findMany({
-    where: {
-      ...(status ? { status } : {}),
-      ...(tableNumber
-        ? {
-            table: {
-              tableNumber: {
-                equals: tableNumber,
-                mode: "insensitive",
-              },
+  const where = {
+    ...(status ? { status } : {}),
+    ...(tableNumber
+      ? {
+          table: {
+            tableNumber: {
+              equals: tableNumber,
+              mode: "insensitive",
             },
-          }
-        : {}),
-    },
-    include: {
-      table: true,
-      orderItems: true,
-      acceptedBy: {
-        select: {
-          id: true,
-          username: true,
-          fullName: true,
-          role: true,
-        },
-      },
-      transaction: true,
-    },
+          },
+        }
+      : {}),
+  };
+
+  return prisma.order.findMany({
+    where,
+    include: ORDER_LIST_INCLUDE,
     orderBy: {
       createdAt: "desc",
     },
-    take: limit,
+    skip,
+    take: safeLimit,
   });
 };
+
 
 export const findOrderById = async (id) => {
   return prisma.order.findUnique({
     where: { id },
-    include: orderInclude,
+    include: ORDER_RESPONSE_INCLUDE,
   });
 };

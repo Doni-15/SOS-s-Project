@@ -3,6 +3,14 @@ import crypto from "crypto";
 import { prisma } from "../../config/prisma.js";
 import { AppError } from "../../common/errors/AppError.js";
 import {
+  toReceiptResponse as serializeReceiptResponse,
+  toTransactionResponse as serializeTransactionResponse,
+} from "../../common/serializers/payment.serializer.js";
+import {
+  ORDER_STATUS,
+  assertOrderTransitionAllowed,
+} from "../../common/constants/orderStatus.js";
+import {
   findOrderForPayment,
   findReceiptById,
   findTransactionById,
@@ -43,79 +51,6 @@ const generateReceiptNumber = () => {
   return `RCP-${datePart}-${timePart}-${randomPart}`;
 };
 
-const toTransactionResponse = (transaction) => ({
-  id: transaction.id,
-  transactionNumber: transaction.transactionNumber,
-  orderId: transaction.orderId,
-  order: transaction.order
-    ? {
-        id: transaction.order.id,
-        orderNumber: transaction.order.orderNumber,
-        table: transaction.order.table
-          ? {
-              id: transaction.order.table.id,
-              tableNumber: transaction.order.table.tableNumber,
-              label: transaction.order.table.label,
-            }
-          : null,
-        status: transaction.order.status,
-        totalAmount: Number(transaction.order.totalAmount),
-        orderItems:
-          transaction.order.orderItems?.map((item) => ({
-            id: item.id,
-            menuItemId: item.menuItemId,
-            itemNameSnapshot: item.itemNameSnapshot,
-            categoryNameSnapshot: item.categoryNameSnapshot,
-            unitPriceSnapshot: Number(item.unitPriceSnapshot),
-            quantity: item.quantity,
-            subtotal: Number(item.subtotal),
-            note: item.note,
-          })) ?? [],
-      }
-    : null,
-  cashierUserId: transaction.cashierUserId,
-  cashier: transaction.cashier ?? null,
-  paymentMethod: transaction.paymentMethod,
-  totalAmount: Number(transaction.totalAmount),
-  paidAmount: Number(transaction.paidAmount),
-  changeAmount: Number(transaction.changeAmount),
-  transactionTime: transaction.transactionTime,
-  receipt: transaction.receipt
-    ? {
-        id: transaction.receipt.id,
-        receiptNumber: transaction.receipt.receiptNumber,
-        printStatus: transaction.receipt.printStatus,
-        printedAt: transaction.receipt.printedAt,
-      }
-    : null,
-});
-
-const toReceiptResponse = (receipt) => ({
-  id: receipt.id,
-  receiptNumber: receipt.receiptNumber,
-  transactionId: receipt.transactionId,
-  printStatus: receipt.printStatus,
-  printedAt: receipt.printedAt,
-  createdAt: receipt.createdAt,
-  updatedAt: receipt.updatedAt,
-  receiptPayload: receipt.receiptPayload,
-  transaction: receipt.transaction
-    ? toTransactionResponse({
-        ...receipt.transaction,
-        receipt,
-      })
-    : null,
-  printAttempts:
-    receipt.printAttempts?.map((attempt) => ({
-      id: attempt.id,
-      receiptId: attempt.receiptId,
-      cashierUserId: attempt.cashierUserId,
-      status: attempt.status,
-      errorMessage: attempt.errorMessage,
-      attemptedAt: attempt.attemptedAt,
-    })) ?? [],
-});
-
 const buildReceiptPayload = ({
   receiptNumber,
   transactionNumber,
@@ -129,6 +64,7 @@ const buildReceiptPayload = ({
     receiptNumber,
     transactionNumber,
     orderNumber: order.orderNumber,
+    customerName: order.customerName ?? null,
     table: {
       tableNumber: order.table?.tableNumber ?? null,
       label: order.table?.label ?? null,
@@ -172,16 +108,11 @@ export const processCashPayment = async ({ orderId, payload, user }) => {
     });
   }
 
-  if (order.status !== "ACCEPTED") {
-    throw new AppError({
-      statusCode: 409,
-      code: "ORDER_NOT_READY_FOR_PAYMENT",
-      message: "Only accepted orders can be paid",
-      fields: {
-        currentStatus: order.status,
-      },
-    });
-  }
+  assertOrderTransitionAllowed({
+    from: order.status,
+    to: ORDER_STATUS.PAID,
+    action: "pay this order",
+  });
 
   const totalAmount = Number(order.totalAmount);
   const paidAmount = Number(payload.paidAmount);
@@ -207,7 +138,7 @@ export const processCashPayment = async ({ orderId, payload, user }) => {
     const updatedOrderResult = await tx.order.updateMany({
       where: {
         id: order.id,
-        status: "ACCEPTED",
+        status: "SERVED",
         transaction: null,
       },
       data: {
@@ -279,7 +210,7 @@ export const processCashPayment = async ({ orderId, payload, user }) => {
       data: {
         orderId: order.id,
         changedByUserId: user.id,
-        fromStatus: "ACCEPTED",
+        fromStatus: order.status,
         toStatus: "PAID",
         note: "Order paid by cashier",
       },
@@ -313,8 +244,8 @@ export const processCashPayment = async ({ orderId, payload, user }) => {
   });
 
   return {
-    transaction: toTransactionResponse(result.transaction),
-    receipt: toReceiptResponse({
+    transaction: serializeTransactionResponse(result.transaction),
+    receipt: serializeReceiptResponse({
       ...result.receipt,
       transaction: result.transaction,
       printAttempts: [],
@@ -322,10 +253,28 @@ export const processCashPayment = async ({ orderId, payload, user }) => {
   };
 };
 
-export const getTransactions = async (query) => {
-  const transactions = await findTransactions(query);
-  return transactions.map(toTransactionResponse);
+export const getTransactions = async (query = {}) => {
+  const result = await findTransactions(query);
+
+  const items = Array.isArray(result)
+    ? result
+    : Array.isArray(result?.items)
+      ? result.items
+      : [];
+
+  const pagination = result?.pagination ?? {
+    page: Number(query.page ?? 1),
+    limit: Number(query.limit ?? items.length ?? 50),
+    total: items.length,
+    totalPages: 1,
+  };
+
+  return {
+    transactions: items.map(serializeTransactionResponse),
+    pagination,
+  };
 };
+
 
 export const getTransactionDetail = async (id) => {
   const transaction = await findTransactionById(id);
@@ -338,7 +287,7 @@ export const getTransactionDetail = async (id) => {
     });
   }
 
-  return toTransactionResponse(transaction);
+  return serializeTransactionResponse(transaction);
 };
 
 export const getReceiptDetail = async (id) => {
@@ -352,7 +301,7 @@ export const getReceiptDetail = async (id) => {
     });
   }
 
-  return toReceiptResponse(receipt);
+  return serializeReceiptResponse(receipt);
 };
 
 export const markReceiptPrintSuccess = async ({ receiptId, user }) => {
@@ -408,7 +357,7 @@ export const markReceiptPrintSuccess = async ({ receiptId, user }) => {
   });
 
   const updatedReceipt = await findReceiptById(receiptId);
-  return toReceiptResponse(updatedReceipt);
+  return serializeReceiptResponse(updatedReceipt);
 };
 
 export const markReceiptPrintFailed = async ({
@@ -470,5 +419,5 @@ export const markReceiptPrintFailed = async ({
   });
 
   const updatedReceipt = await findReceiptById(receiptId);
-  return toReceiptResponse(updatedReceipt);
+  return serializeReceiptResponse(updatedReceipt);
 };

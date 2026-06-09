@@ -39,3 +39,6 @@ docs/
 # Keep project folders
 !sos_backend/
 !sos_frontend/
+
+# Quality reports
+quality-reports/

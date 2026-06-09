@@ -1,6 +1,7 @@
 import express from "express";
 
 import {
+  getCustomerOrderTrackingController,
   getPublicMenuController,
   submitCustomerOrderController,
   validateQrTokenController,
@@ -11,5 +12,6 @@ const router = express.Router();
 router.post("/qr/validate", validateQrTokenController);
 router.get("/menu", getPublicMenuController);
 router.post("/orders", submitCustomerOrderController);
+router.get("/orders/:id", getCustomerOrderTrackingController);
 
 export default router;

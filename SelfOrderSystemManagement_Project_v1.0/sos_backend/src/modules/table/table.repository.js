@@ -12,6 +12,7 @@ const tableSelect = {
 const qrTokenSelect = {
   id: true,
   tableId: true,
+  tokenValue: true,
   isRevoked: true,
   revokedAt: true,
   expiresAt: true,
@@ -64,6 +65,7 @@ export const findTables = async ({ search, isActive, limit }) => {
         },
         select: {
           id: true,
+          tokenValue: true,
           isRevoked: true,
           expiresAt: true,
           createdAt: true,
@@ -96,6 +98,7 @@ export const findTableById = async (id) => {
       qrTokens: {
         select: {
           id: true,
+          tokenValue: true,
           isRevoked: true,
           revokedAt: true,
           expiresAt: true,

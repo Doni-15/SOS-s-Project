@@ -1,4 +1,4 @@
-import { CheckCircle2, CreditCard, XCircle } from "lucide-react";
+import { CheckCircle2, CreditCard, PackageCheck, XCircle } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
 
@@ -9,6 +9,7 @@ import { ErrorState, LoadingState } from "../../../shared/components/DataState";
 import { formatDateTime } from "../../../shared/utils/formatters";
 import { useAcceptOrder } from "../../orders/hooks/useAcceptOrder";
 import { useCancelOrder } from "../../orders/hooks/useCancelOrder";
+import { useMarkOrderServed } from "../../orders/hooks/useMarkOrderServed";
 import { useOrderDetail } from "../../orders/hooks/useOrderDetail";
 import { CashierOrderItemsTable } from "../components/CashierOrderItemsTable";
 import { CashierOrderStatusBadge } from "../components/CashierOrderStatusBadge";
@@ -33,6 +34,7 @@ export function CashierOrderDetailPage() {
   const orderDetailQuery = useOrderDetail(orderId);
   const acceptOrder = useAcceptOrder();
   const cancelOrder = useCancelOrder();
+  const markServedMutation = useMarkOrderServed();
 
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [actionError, setActionError] = useState("");
@@ -40,7 +42,7 @@ export function CashierOrderDetailPage() {
   const order = orderDetailQuery.data;
   const status = getOrderStatus(order);
   const transaction = getOrderTransaction(order);
-  const isActionLoading = acceptOrder.isPending || cancelOrder.isPending;
+  const isActionLoading = acceptOrder.isPending || cancelOrder.isPending || markServedMutation.isPending;
 
   const handleAccept = async () => {
     if (!order?.id) return;
@@ -66,6 +68,19 @@ export function CashierOrderDetailPage() {
       navigate(ROUTES.cashierOrders);
     } catch (error) {
       setActionError(error?.message || "Pesanan gagal dibatalkan.");
+    }
+  };
+
+  const handleMarkServed = async () => {
+    if (!order?.id) return;
+
+    setActionError("");
+
+    try {
+      await markServedMutation.mutateAsync(order.id);
+      await orderDetailQuery.refetch();
+    } catch (error) {
+      setActionError(error?.message || "Status pesanan gagal diperbarui.");
     }
   };
 
@@ -213,12 +228,26 @@ export function CashierOrderDetailPage() {
                 {status === "ACCEPTED" ? (
                   <Button
                     type="button"
+                    onClick={handleMarkServed}
+                    disabled={isActionLoading || markServedMutation.isPending}
+                    className="h-11 w-full text-sm font-extrabold"
+                  >
+                    <PackageCheck className="h-4 w-4" />
+                    {markServedMutation.isPending
+                      ? "Memperbarui..."
+                      : "Pesanan Dihidangkan"}
+                  </Button>
+                ) : null}
+
+                {status === "SERVED" ? (
+                  <Button
+                    type="button"
                     onClick={handlePayment}
                     disabled={isActionLoading}
                     className="h-11 w-full text-sm font-extrabold"
                   >
                     <CreditCard className="h-4 w-4" />
-                    Proses Pembayaran
+                    Bayar Pesanan
                   </Button>
                 ) : null}
 

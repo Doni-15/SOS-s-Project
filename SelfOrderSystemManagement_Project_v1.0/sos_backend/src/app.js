@@ -23,10 +23,10 @@ export const app = express();
 
 app.set("trust proxy", 1);
 
-const allowedOrigins =
-  env.corsOrigin === "*"
-    ? true
-    : env.corsOrigin.split(",").map((origin) => origin.trim());
+const allowedOrigins = env.corsOrigin
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 app.use(requestContextMiddleware);
 app.use(
@@ -53,23 +53,52 @@ app.get("/", (req, res) => {
   });
 });
 
-app.get("/api/health", async (req, res, next) => {
+app.get("/api/health", (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      service: "sos_backend",
+      status: "running",
+      database: "not_checked",
+      environment: env.nodeEnv,
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+    },
+    message: "SOS Backend is running",
+  });
+});
+
+app.get("/api/health/ready", async (req, res) => {
   try {
-    await prisma.$queryRaw`SELECT 1`;
+    await prisma.$connect();
 
     res.json({
       success: true,
       data: {
         service: "sos_backend",
-        status: "running",
+        status: "ready",
         database: "connected",
         environment: env.nodeEnv,
         timestamp: new Date().toISOString(),
       },
-      message: "SOS Backend is running properly",
+      message: "SOS Backend is ready",
     });
   } catch (error) {
-    next(error);
+    res.status(503).json({
+      success: false,
+      error: {
+        code: "DATABASE_NOT_READY",
+        message: "Database is not ready",
+        fields:
+          env.nodeEnv === "production"
+            ? null
+            : {
+                database: error.message,
+              },
+      },
+      timestamp: new Date().toISOString(),
+      path: req.originalUrl,
+    });
   }
 });
 

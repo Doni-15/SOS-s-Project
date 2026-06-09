@@ -28,8 +28,11 @@ router.post(
 
 router.get("/menu-items", getMenuItemsController);
 router.get("/menu-items/:id", getMenuItemDetailController);
-router.post("/menu-items", createMenuItemController);
-router.patch("/menu-items/:id", updateMenuItemController);
-router.delete("/menu-items/:id", deleteMenuItemController);
+
+router.post("/menu-items", authorizeRoles("OWNER"), createMenuItemController);
+
+router.patch("/menu-items/:id", authorizeRoles("OWNER", "CASHIER"), updateMenuItemController);
+
+router.delete("/menu-items/:id", authorizeRoles("OWNER"), deleteMenuItemController);
 
 export default router;

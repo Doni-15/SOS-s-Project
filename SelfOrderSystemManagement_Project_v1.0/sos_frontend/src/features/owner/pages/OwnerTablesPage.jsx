@@ -192,27 +192,48 @@ function StatusBadge({ isActive }) {
   );
 }
 
-function QrStatusBadge({ token }) {
-  if (!token) {
-    return (
-      <span className="inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-extrabold text-amber-700 ring-1 ring-amber-100">
-        Belum ada QR aktif
-      </span>
-    );
-  }
+function QrStatusBadge({ token, onClick, isSelected = false }) {
+  const status = !token
+    ? {
+        label: "Belum ada QR aktif",
+        className: "bg-amber-50 text-amber-700 ring-amber-100",
+      }
+    : token.isRevoked
+      ? {
+          label: "QR dicabut",
+          className: "bg-red-50 text-red-700 ring-red-100",
+        }
+      : {
+          label: "QR aktif",
+          className: "bg-blue-50 text-blue-700 ring-blue-100",
+        };
 
-  if (token.isRevoked) {
-    return (
-      <span className="inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-extrabold text-red-700 ring-1 ring-red-100">
-        QR dicabut
-      </span>
-    );
+  const badgeClassName = cn(
+    "inline-flex rounded-full px-3 py-1 text-xs font-extrabold ring-1",
+    status.className,
+    isSelected ? "outline outline-2 outline-offset-2 outline-blue-300" : "",
+  );
+
+  if (!onClick) {
+    return <span className={badgeClassName}>{status.label}</span>;
   }
 
   return (
-    <span className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-extrabold text-blue-700 ring-1 ring-blue-100">
-      QR aktif
-    </span>
+    <button
+      type="button"
+      onClick={(event) => {
+        event.stopPropagation();
+        onClick();
+      }}
+      className={cn(
+        badgeClassName,
+        "cursor-pointer transition hover:scale-[1.03] hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2",
+      )}
+      title="Klik untuk melihat QR meja"
+      aria-label={`Lihat QR ${status.label}`}
+    >
+      {status.label}
+    </button>
   );
 }
 
@@ -354,12 +375,11 @@ function TableQrPreviewPanel({
   onDownloadQr,
   onPrintQr,
 }) {
-  const hasGeneratedToken = Boolean(generatedQrToken?.token);
-  const qrUrl = hasGeneratedToken
-    ? getCustomerOrderUrl(generatedQrToken.token)
-    : "";
-  const qrCanvasId = getQrCanvasId(table?.id || table?.tableNumber);
   const activeQrToken = generatedQrToken ?? getActiveQrToken(table);
+  const activeRawToken = activeQrToken?.tokenValue ?? activeQrToken?.token;
+  const hasGeneratedToken = Boolean(activeRawToken);
+  const qrUrl = hasGeneratedToken ? getCustomerOrderUrl(activeRawToken) : "";
+  const qrCanvasId = getQrCanvasId(table?.id || table?.tableNumber);
   const canGenerate = Boolean(table?.id && table?.isActive);
 
   return (
@@ -393,7 +413,7 @@ function TableQrPreviewPanel({
               </p>
               <p className="mt-1 max-w-xs text-xs font-semibold leading-5 text-slate-500">
                 {table?.id
-                  ? "Backend hanya menampilkan raw token sekali saat generate. Klik Generate QR untuk membuat QR yang bisa dicetak."
+                  ? "Gunakan token QR aktif tersimpan atau klik Generate QR untuk membuat QR baru yang bisa dicetak."
                   : "Simpan meja terlebih dahulu agar QR dapat dibuat otomatis."}
               </p>
             </div>
@@ -550,6 +570,24 @@ function TableQrPreviewPanel({
   );
 }
 
+
+function normalizeQrTokenList(value) {
+  if (Array.isArray(value)) return value;
+  if (Array.isArray(value?.qrTokens)) return value.qrTokens;
+  if (Array.isArray(value?.data?.qrTokens)) return value.data.qrTokens;
+  if (Array.isArray(value?.recentQrTokens)) return value.recentQrTokens;
+  if (Array.isArray(value?.qrTokens?.data)) return value.qrTokens.data;
+  return [];
+}
+
+function isUsableQrToken(token) {
+  return Boolean(token) && token.isRevoked !== true;
+}
+
+function getRawQrTokenValue(token) {
+  return token?.tokenValue ?? token?.token ?? "";
+}
+
 export function OwnerTablesPage() {
   const [viewMode, setViewMode] = useState("list");
   const [filters, setFilters] = useState({
@@ -614,13 +652,37 @@ export function OwnerTablesPage() {
 
   const qrTokensQuery = useTableQrTokens(selectedTable?.id, { limit: 20 });
   const qrTokens = useMemo(
-    () => qrTokensQuery.data ?? [],
+    () => normalizeQrTokenList(qrTokensQuery.data),
     [qrTokensQuery.data],
   );
 
-  const qrUrl = generatedQrToken?.token
-    ? getCustomerOrderUrl(generatedQrToken.token)
-    : "";
+  const tableQrTokens = useMemo(
+    () => [
+      ...normalizeQrTokenList(selectedTable?.recentQrTokens),
+      ...normalizeQrTokenList(selectedTable?.qrTokens),
+    ],
+    [selectedTable],
+  );
+
+  const selectedActiveQrToken = isUsableQrToken(selectedTable?.activeQrToken)
+    ? selectedTable.activeQrToken
+    : null;
+
+  const resolvedActiveQrToken =
+    qrTokens.find((token) => isUsableQrToken(token) && getRawQrTokenValue(token)) ??
+    tableQrTokens.find(
+      (token) => isUsableQrToken(token) && getRawQrTokenValue(token),
+    ) ??
+    (selectedActiveQrToken && getRawQrTokenValue(selectedActiveQrToken)
+      ? selectedActiveQrToken
+      : null) ??
+    qrTokens.find(isUsableQrToken) ??
+    tableQrTokens.find(isUsableQrToken) ??
+    selectedActiveQrToken;
+
+  const previewQrToken = generatedQrToken ?? resolvedActiveQrToken;
+  const previewRawToken = getRawQrTokenValue(previewQrToken);
+  const qrUrl = previewRawToken ? getCustomerOrderUrl(previewRawToken) : "";
   const qrCanvasId = getQrCanvasId(previewTable?.id || previewTable?.tableNumber);
 
   const handleFilterChange = (field) => (event) => {
@@ -653,6 +715,27 @@ export function OwnerTablesPage() {
     setTableForm(initialTableForm);
     setCopyMessage("");
     setActionError("");
+  };
+
+  const handleViewTableQr = (table) => {
+    if (!table?.id) {
+      return;
+    }
+
+    const activeToken = getActiveQrToken(table);
+
+    setViewMode("list");
+    setSelectedTableId(table.id);
+    setEditingTableId("");
+    setGeneratedQrToken(null);
+    setTableForm(initialTableForm);
+    setQrForm(initialQrForm);
+    setActionError("");
+    setCopyMessage(
+      activeToken
+        ? "QR meja dipilih. Preview, copy, unduh, atau print QR dari panel kanan."
+        : "Meja dipilih. QR aktif belum tersedia, klik Generate QR untuk membuat QR.",
+    );
   };
 
   const handleAddTable = () => {
@@ -1110,7 +1193,11 @@ export function OwnerTablesPage() {
 
                           <td className="whitespace-nowrap px-5 py-4">
                             <div className="flex flex-col gap-1">
-                              <QrStatusBadge token={getActiveQrToken(table)} />
+                              <QrStatusBadge
+                                token={getActiveQrToken(table)}
+                                isSelected={selectedTable?.id === table.id}
+                                onClick={() => handleViewTableQr(table)}
+                              />
                               <span className="text-xs font-semibold text-slate-500">
                                 {getQrCount(table)} token
                               </span>

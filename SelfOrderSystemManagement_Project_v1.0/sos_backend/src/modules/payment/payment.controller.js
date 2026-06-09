@@ -40,13 +40,11 @@ export const createPaymentController = async (req, res, next) => {
 export const getTransactionsController = async (req, res, next) => {
   try {
     const query = transactionQuerySchema.parse(req.query);
-    const transactions = await getTransactions(query);
+    const result = await getTransactions(query);
 
     return successResponse(res, {
       message: "Transactions retrieved successfully",
-      data: {
-        transactions,
-      },
+      data: result,
     });
   } catch (error) {
     next(error);

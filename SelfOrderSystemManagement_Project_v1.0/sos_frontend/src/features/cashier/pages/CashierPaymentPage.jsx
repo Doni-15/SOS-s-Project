@@ -52,7 +52,7 @@ export function CashierPaymentPage() {
 
   const canSubmit =
     order &&
-    status === "ACCEPTED" &&
+    status === "SERVED" &&
     numericPaidAmount >= totalAmount &&
     !createCashPayment.isPending;
 
@@ -64,8 +64,8 @@ export function CashierPaymentPage() {
       return;
     }
 
-    if (status !== "ACCEPTED") {
-      setFormError("Hanya pesanan berstatus diterima yang bisa dibayar.");
+    if (status !== "SERVED") {
+      setFormError("Hanya pesanan berstatus dihidangkan yang bisa dibayar.");
       return;
     }
 
@@ -173,7 +173,7 @@ export function CashierPaymentPage() {
                 Input Pembayaran
               </h2>
 
-              {status !== "ACCEPTED" ? (
+              {status !== "SERVED" ? (
                 <div className="mt-4 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
                   Pesanan belum siap dibayar. Status saat ini: {status}.
                 </div>

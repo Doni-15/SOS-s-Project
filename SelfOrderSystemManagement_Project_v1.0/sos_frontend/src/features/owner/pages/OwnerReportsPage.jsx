@@ -4,6 +4,7 @@ import {
   ReceiptText,
   ShoppingCart,
   TrendingUp,
+  X,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -18,6 +19,7 @@ import {
   formatNumber,
 } from "../../../shared/utils/formatters";
 import { useSalesSummary } from "../../reports/hooks/useOwnerReports";
+import { ReceiptPreview } from "../../transactions/components/ReceiptPreview";
 import { TransactionStatusBadge } from "../../transactions/components/TransactionStatusBadge";
 import { useTransactions } from "../../transactions/hooks/useTransactions";
 
@@ -109,6 +111,89 @@ function getTableDetail(transaction) {
   );
 }
 
+
+function getReceiptForTransaction(transaction) {
+  return (
+    transaction?.receipt ??
+    transaction?.receiptData ??
+    transaction?.order?.receipt ??
+    null
+  );
+}
+
+function OwnerReceiptDialog({ transaction, onClose }) {
+  const receipt = getReceiptForTransaction(transaction);
+
+  if (!transaction) {
+    return null;
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/50 px-4 py-8 print:static print:block print:bg-white print:p-0">
+      <section className="w-full max-w-2xl rounded-3xl bg-slate-50 shadow-2xl ring-1 ring-slate-200 print:max-w-none print:rounded-none print:bg-white print:shadow-none print:ring-0">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4 print:hidden">
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-wide text-blue-700">
+              Struk Transaksi
+            </p>
+            <h3 className="mt-1 text-lg font-extrabold text-slate-950">
+              {getTransactionId(transaction)}
+            </h3>
+            <p className="mt-1 text-sm text-slate-500">
+              Preview struk dari transaksi laporan owner.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-slate-200 bg-white p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
+            aria-label="Tutup preview struk"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="px-5 py-5 print:p-0">
+          {receipt ? (
+            <ReceiptPreview transaction={transaction} receipt={receipt} />
+          ) : (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-5 py-10 text-center">
+              <p className="text-base font-extrabold text-slate-950">
+                Struk belum tersedia
+              </p>
+              <p className="mt-2 text-sm text-slate-500">
+                Transaksi ini belum memiliki data receipt dari backend.
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-3 border-t border-slate-200 px-5 py-4 print:hidden">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+          >
+            Tutup
+          </button>
+
+          {receipt ? (
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-800"
+            >
+              Cetak Struk
+            </button>
+          ) : null}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+
 function exportTransactionsCsv(transactions) {
   const headers = ["Tanggal", "ID Transaksi", "Meja / Detail", "Metode", "Total", "Status"];
 
@@ -152,6 +237,7 @@ export function OwnerReportsPage() {
 
   const [appliedFilters, setAppliedFilters] = useState(draftFilters);
   const [page, setPage] = useState(1);
+  const [selectedReceiptTransaction, setSelectedReceiptTransaction] = useState(null);
 
   const reportParams = useMemo(
     () => ({
@@ -413,9 +499,13 @@ export function OwnerReportsPage() {
                             <td className="whitespace-nowrap px-5 py-4">
                               <button
                                 type="button"
-                                className="text-sm font-bold text-blue-700 transition hover:text-blue-800"
+                                onClick={() => setSelectedReceiptTransaction(transaction)}
+                                disabled={!getReceiptForTransaction(transaction)}
+                                className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-extrabold text-blue-700 transition hover:bg-blue-100 hover:text-blue-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400"
                               >
-                                Lihat Detail
+                                {getReceiptForTransaction(transaction)
+                                  ? "Lihat Struk"
+                                  : "Belum Ada Struk"}
                               </button>
                             </td>
                           </tr>
@@ -461,6 +551,13 @@ export function OwnerReportsPage() {
           </>
         ) : null}
       </div>
+
+      {selectedReceiptTransaction ? (
+        <OwnerReceiptDialog
+          transaction={selectedReceiptTransaction}
+          onClose={() => setSelectedReceiptTransaction(null)}
+        />
+      ) : null}
     </DashboardShell>
   );
 }

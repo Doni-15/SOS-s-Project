@@ -21,11 +21,18 @@ const toEndDateExclusive = (dateString) => {
   return addDays(new Date(`${dateString}T00:00:00.000Z`), 1);
 };
 
-const buildTransactionDateFilter = ({ startDate, endDate }) => {
+const toDateKey = (value) => {
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10);
+};
+
+const buildTransactionWhere = ({ startDate, endDate } = {}) => {
   const gte = toStartDate(startDate);
   const lt = toEndDateExclusive(endDate);
 
-  if (!gte && !lt) return {};
+  if (!gte && !lt) {
+    return {};
+  }
 
   return {
     transactionTime: {
@@ -35,15 +42,15 @@ const buildTransactionDateFilter = ({ startDate, endDate }) => {
   };
 };
 
-const formatDateKey = (date) => {
-  return date.toISOString().slice(0, 10);
-};
+const getPeriod = (query = {}) => ({
+  startDate: query.startDate ?? null,
+  endDate: query.endDate ?? null,
+  period: query.period ?? "daily",
+});
 
-export const getSalesSummary = async (query) => {
-  const where = buildTransactionDateFilter(query);
-
-  const transactions = await prisma.transaction.findMany({
-    where,
+const findReportTransactions = async (query = {}) => {
+  return prisma.transaction.findMany({
+    where: buildTransactionWhere(query),
     include: {
       cashier: {
         select: {
@@ -53,219 +60,261 @@ export const getSalesSummary = async (query) => {
           role: true,
         },
       },
-      receipt: {
-        select: {
-          id: true,
-          receiptNumber: true,
-          printStatus: true,
-          printedAt: true,
-        },
-      },
+      receipt: true,
       order: {
-        select: {
-          id: true,
-          orderNumber: true,
-          table: {
-            select: {
-              id: true,
-              tableNumber: true,
-              label: true,
-            },
-          },
+        include: {
+          table: true,
+          orderItems: true,
         },
       },
-    },
-    orderBy: {
-      transactionTime: "desc",
-    },
-  });
-
-  const receiptStatusCounts = {
-    GENERATED: 0,
-    PRINTED: 0,
-    FAILED: 0,
-  };
-
-  const cashierMap = new Map();
-
-  let grossSales = 0;
-  let totalCashReceived = 0;
-  let totalChange = 0;
-
-  for (const transaction of transactions) {
-    const transactionTotal = toNumber(transaction.totalAmount);
-    const paidAmount = toNumber(transaction.paidAmount);
-    const changeAmount = toNumber(transaction.changeAmount);
-
-    grossSales += transactionTotal;
-    totalCashReceived += paidAmount;
-    totalChange += changeAmount;
-
-    const receiptStatus = transaction.receipt?.printStatus;
-
-    if (receiptStatus && receiptStatusCounts[receiptStatus] !== undefined) {
-      receiptStatusCounts[receiptStatus] += 1;
-    }
-
-    const cashierId = transaction.cashierUserId;
-
-    if (!cashierMap.has(cashierId)) {
-      cashierMap.set(cashierId, {
-        cashier: transaction.cashier,
-        totalTransactions: 0,
-        grossSales: 0,
-        totalCashReceived: 0,
-        totalChange: 0,
-      });
-    }
-
-    const cashierSummary = cashierMap.get(cashierId);
-    cashierSummary.totalTransactions += 1;
-    cashierSummary.grossSales += transactionTotal;
-    cashierSummary.totalCashReceived += paidAmount;
-    cashierSummary.totalChange += changeAmount;
-  }
-
-  return {
-    period: {
-      startDate: query.startDate ?? null,
-      endDate: query.endDate ?? null,
-    },
-    totalTransactions: transactions.length,
-    totalOrders: transactions.length,
-    grossSales,
-    totalCashReceived,
-    totalChange,
-    averageOrderValue:
-      transactions.length > 0 ? Math.round(grossSales / transactions.length) : 0,
-    receiptStatusCounts,
-    cashierSummaries: Array.from(cashierMap.values()),
-  };
-};
-
-export const getDailySales = async (query) => {
-  const where = buildTransactionDateFilter(query);
-
-  const transactions = await prisma.transaction.findMany({
-    where,
-    select: {
-      id: true,
-      totalAmount: true,
-      paidAmount: true,
-      changeAmount: true,
-      transactionTime: true,
     },
     orderBy: {
       transactionTime: "asc",
     },
   });
+};
 
-  const dailyMap = new Map();
+const getTransactionItems = (transaction) => {
+  if (!transaction?.order?.orderItems) return [];
+  return Array.isArray(transaction.order.orderItems)
+    ? transaction.order.orderItems
+    : [];
+};
+
+const getTransactionItemCount = (transaction) => {
+  return getTransactionItems(transaction).reduce(
+    (total, item) => total + toNumber(item.quantity),
+    0,
+  );
+};
+
+const createEmptySummary = (period) => ({
+  period,
+  totalRevenue: 0,
+  revenue: 0,
+  totalSales: 0,
+  totalIncome: 0,
+  grossSales: 0,
+
+  totalTransactions: 0,
+  transactionCount: 0,
+  transactions: 0,
+  totalOrders: 0,
+
+  averageTransaction: 0,
+  averageTransactionValue: 0,
+  averageOrderValue: 0,
+
+  totalItems: 0,
+  quantitySold: 0,
+
+  totalCashReceived: 0,
+  totalChange: 0,
+  receiptStatusCounts: {},
+  cashierSummaries: [],
+});
+
+export const getSalesSummary = async (query = {}) => {
+  const period = getPeriod(query);
+  const transactions = await findReportTransactions(query);
+
+  const summary = createEmptySummary(period);
+  const cashierMap = new Map();
 
   for (const transaction of transactions) {
-    const dateKey = formatDateKey(transaction.transactionTime);
+    const totalAmount = toNumber(transaction.totalAmount);
+    const paidAmount = toNumber(transaction.paidAmount);
+    const changeAmount = toNumber(transaction.changeAmount);
+    const itemCount = getTransactionItemCount(transaction);
 
-    if (!dailyMap.has(dateKey)) {
-      dailyMap.set(dateKey, {
-        date: dateKey,
+    summary.totalRevenue += totalAmount;
+    summary.revenue += totalAmount;
+    summary.totalSales += totalAmount;
+    summary.totalIncome += totalAmount;
+    summary.grossSales += totalAmount;
+
+    summary.totalTransactions += 1;
+    summary.transactionCount += 1;
+    summary.transactions += 1;
+    summary.totalOrders += 1;
+
+    summary.totalItems += itemCount;
+    summary.quantitySold += itemCount;
+
+    summary.totalCashReceived += paidAmount;
+    summary.totalChange += changeAmount;
+
+    const printStatus = transaction.receipt?.printStatus ?? "NO_RECEIPT";
+    summary.receiptStatusCounts[printStatus] =
+      (summary.receiptStatusCounts[printStatus] ?? 0) + 1;
+
+    const cashierId = transaction.cashierUserId ?? "unknown";
+
+    if (!cashierMap.has(cashierId)) {
+      cashierMap.set(cashierId, {
+        cashierUserId: cashierId,
+        username: transaction.cashier?.username ?? null,
+        fullName: transaction.cashier?.fullName ?? null,
         totalTransactions: 0,
-        totalOrders: 0,
+        transactionCount: 0,
         grossSales: 0,
-        totalCashReceived: 0,
-        totalChange: 0,
+        totalRevenue: 0,
       });
     }
 
-    const row = dailyMap.get(dateKey);
-    row.totalTransactions += 1;
-    row.totalOrders += 1;
-    row.grossSales += toNumber(transaction.totalAmount);
-    row.totalCashReceived += toNumber(transaction.paidAmount);
-    row.totalChange += toNumber(transaction.changeAmount);
+    const cashierSummary = cashierMap.get(cashierId);
+    cashierSummary.totalTransactions += 1;
+    cashierSummary.transactionCount += 1;
+    cashierSummary.grossSales += totalAmount;
+    cashierSummary.totalRevenue += totalAmount;
   }
 
-  const dailySales = Array.from(dailyMap.values()).map((row) => ({
-    ...row,
-    averageOrderValue:
-      row.totalTransactions > 0
-        ? Math.round(row.grossSales / row.totalTransactions)
-        : 0,
-  }));
+  const average =
+    summary.totalTransactions === 0
+      ? 0
+      : Number((summary.totalRevenue / summary.totalTransactions).toFixed(2));
+
+  summary.averageTransaction = average;
+  summary.averageTransactionValue = average;
+  summary.averageOrderValue = average;
+  summary.cashierSummaries = Array.from(cashierMap.values());
+
+  return summary;
+};
+
+export const getDailySales = async (query = {}) => {
+  const period = getPeriod(query);
+  const transactions = await findReportTransactions(query);
+  const dailyMap = new Map();
+
+  for (const transaction of transactions) {
+    const date = toDateKey(transaction.transactionTime);
+
+    if (!date) {
+      continue;
+    }
+
+    if (!dailyMap.has(date)) {
+      dailyMap.set(date, {
+        date,
+        day: date,
+        transactionDate: date,
+
+        totalRevenue: 0,
+        revenue: 0,
+        totalAmount: 0,
+        sales: 0,
+        grossSales: 0,
+
+        totalTransactions: 0,
+        transactionCount: 0,
+        transactions: 0,
+        count: 0,
+
+        totalOrders: 0,
+        totalCashReceived: 0,
+        totalChange: 0,
+        totalItems: 0,
+      });
+    }
+
+    const row = dailyMap.get(date);
+    const totalAmount = toNumber(transaction.totalAmount);
+    const paidAmount = toNumber(transaction.paidAmount);
+    const changeAmount = toNumber(transaction.changeAmount);
+    const itemCount = getTransactionItemCount(transaction);
+
+    row.totalRevenue += totalAmount;
+    row.revenue += totalAmount;
+    row.totalAmount += totalAmount;
+    row.sales += totalAmount;
+    row.grossSales += totalAmount;
+
+    row.totalTransactions += 1;
+    row.transactionCount += 1;
+    row.transactions += 1;
+    row.count += 1;
+
+    row.totalOrders += 1;
+    row.totalCashReceived += paidAmount;
+    row.totalChange += changeAmount;
+    row.totalItems += itemCount;
+  }
 
   return {
-    period: {
-      startDate: query.startDate ?? null,
-      endDate: query.endDate ?? null,
-    },
-    dailySales,
+    period,
+    dailySales: Array.from(dailyMap.values()).sort((a, b) =>
+      a.date.localeCompare(b.date),
+    ),
   };
 };
 
-export const getTopMenuItems = async (query) => {
-  const where = buildTransactionDateFilter(query);
-
-  const transactions = await prisma.transaction.findMany({
-    where,
-    include: {
-      order: {
-        include: {
-          orderItems: {
-            select: {
-              menuItemId: true,
-              itemNameSnapshot: true,
-              categoryNameSnapshot: true,
-              unitPriceSnapshot: true,
-              quantity: true,
-              subtotal: true,
-            },
-          },
-        },
-      },
-    },
-  });
-
-  const menuMap = new Map();
+export const getTopMenuItems = async (query = {}) => {
+  const period = getPeriod(query);
+  const limit = Number(query.limit ?? 10);
+  const transactions = await findReportTransactions(query);
+  const itemMap = new Map();
 
   for (const transaction of transactions) {
-    for (const item of transaction.order.orderItems) {
-      const key = item.menuItemId;
+    for (const item of getTransactionItems(transaction)) {
+      const key = item.menuItemId ?? item.itemNameSnapshot ?? item.id;
 
-      if (!menuMap.has(key)) {
-        menuMap.set(key, {
-          menuItemId: item.menuItemId,
-          itemName: item.itemNameSnapshot,
-          categoryName: item.categoryNameSnapshot,
-          unitPrice: toNumber(item.unitPriceSnapshot),
+      if (!key) {
+        continue;
+      }
+
+      if (!itemMap.has(key)) {
+        const name = item.itemNameSnapshot ?? item.menuItem?.name ?? "Menu";
+
+        itemMap.set(key, {
+          menuItemId: item.menuItemId ?? null,
+
+          name,
+          menuName: name,
+          itemName: name,
+
+          categoryName: item.categoryNameSnapshot ?? null,
+
           quantitySold: 0,
-          qtySold: 0,
+          totalQuantity: 0,
+          quantity: 0,
+          soldQty: 0,
+
+          revenue: 0,
+          totalRevenue: 0,
+          totalAmount: 0,
           grossSales: 0,
-          orderCount: 0,
         });
       }
 
-      const row = menuMap.get(key);
-      row.quantitySold += item.quantity;
-      row.qtySold += item.quantity;
-      row.grossSales += toNumber(item.subtotal);
-      row.orderCount += 1;
+      const row = itemMap.get(key);
+      const quantity = toNumber(item.quantity);
+      const subtotal = toNumber(item.subtotal);
+
+      row.quantitySold += quantity;
+      row.totalQuantity += quantity;
+      row.quantity += quantity;
+      row.soldQty += quantity;
+
+      row.revenue += subtotal;
+      row.totalRevenue += subtotal;
+      row.totalAmount += subtotal;
+      row.grossSales += subtotal;
     }
   }
 
-  const topMenuItems = Array.from(menuMap.values())
+  const topMenuItems = Array.from(itemMap.values())
     .sort((a, b) => {
       if (b.quantitySold !== a.quantitySold) {
         return b.quantitySold - a.quantitySold;
       }
 
-      return b.grossSales - a.grossSales;
+      return b.revenue - a.revenue;
     })
-    .slice(0, query.limit);
+    .slice(0, limit);
 
   return {
-    period: {
-      startDate: query.startDate ?? null,
-      endDate: query.endDate ?? null,
-    },
+    period,
     topMenuItems,
   };
 };

@@ -21,15 +21,17 @@ export function useCashierOrderSummary() {
   return useQuery({
     queryKey: CASHIER_QUERY_KEYS.summary,
     queryFn: async () => {
-      const [newOrders, processingOrders, paidOrders] = await Promise.all([
+      const [newOrders, processingOrders, servedOrders, paidOrders] = await Promise.all([
         orderApi.getOrders({ status: "SUBMITTED", limit: 200 }),
         orderApi.getOrders({ status: "ACCEPTED", limit: 200 }),
+        orderApi.getOrders({ status: "SERVED", limit: 200 }),
         orderApi.getOrders({ status: "PAID", limit: 200 }),
       ]);
 
       return {
         submitted: newOrders.length,
         accepted: processingOrders.length,
+        served: servedOrders.length,
         paid: paidOrders.length,
       };
     },

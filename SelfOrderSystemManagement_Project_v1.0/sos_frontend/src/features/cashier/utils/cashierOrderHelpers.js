@@ -1,6 +1,7 @@
 export const CASHIER_ORDER_STATUSES = [
   "SUBMITTED",
   "ACCEPTED",
+  "SERVED",
   "PAID",
   "CANCELLED",
   "EXPIRED",
@@ -9,6 +10,7 @@ export const CASHIER_ORDER_STATUSES = [
 export const CASHIER_ORDER_STATUS_LABELS = {
   SUBMITTED: "Baru",
   ACCEPTED: "Diproses",
+  SERVED: "Dihidangkan",
   PAID: "Selesai",
   CANCELLED: "Dibatalkan",
   EXPIRED: "Kedaluwarsa",
@@ -17,6 +19,7 @@ export const CASHIER_ORDER_STATUS_LABELS = {
 export const CASHIER_ORDER_STATUS_STYLES = {
   SUBMITTED: "bg-blue-50 text-blue-700 ring-blue-100",
   ACCEPTED: "bg-amber-50 text-amber-700 ring-amber-100",
+  SERVED: "bg-indigo-50 text-indigo-700 ring-indigo-100",
   PAID: "bg-emerald-50 text-emerald-700 ring-emerald-100",
   CANCELLED: "bg-red-50 text-red-700 ring-red-100",
   EXPIRED: "bg-slate-100 text-slate-700 ring-slate-200",
@@ -62,6 +65,10 @@ export function getTableLabel(order) {
   }
 
   return table.label || table.tableNumber || table.table_number || "-";
+}
+
+export function getCustomerName(order) {
+  return order?.customerName ?? order?.customer_name ?? "";
 }
 
 export function getCustomerNote(order) {

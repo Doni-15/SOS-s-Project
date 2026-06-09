@@ -3,12 +3,14 @@ import crypto from "crypto";
 import { env } from "../../config/env.js";
 import { prisma } from "../../config/prisma.js";
 import { AppError } from "../../common/errors/AppError.js";
+import { toOrderResponse as serializeOrderResponse } from "../../common/serializers/order.serializer.js";
 import { hashToken } from "../../common/utils/hashToken.js";
 import {
   createOrderSession,
   findActiveOrderSession,
   findMenuItemsByIds,
   findPublicMenuItems,
+  findPublicOrderBySession,
   findValidQrTokenByHash,
 } from "./publicOrder.repository.js";
 
@@ -76,40 +78,8 @@ const groupMenuItemsByCategory = (items) => {
   return Array.from(categoryMap.values());
 };
 
-const toOrderResponse = (order) => {
-  return {
-    id: order.id,
-    orderNumber: order.orderNumber,
-    tableId: order.tableId,
-    table: order.table
-      ? {
-          id: order.table.id,
-          tableNumber: order.table.tableNumber,
-          label: order.table.label,
-        }
-      : null,
-    orderSessionId: order.orderSessionId,
-    status: order.status,
-    totalAmount: Number(order.totalAmount),
-    customerNote: order.customerNote,
-    submittedAt: order.submittedAt,
-    createdAt: order.createdAt,
-    orderItems: order.orderItems.map((item) => ({
-      id: item.id,
-      menuItemId: item.menuItemId,
-      itemNameSnapshot: item.itemNameSnapshot,
-      categoryNameSnapshot: item.categoryNameSnapshot,
-      unitPriceSnapshot: Number(item.unitPriceSnapshot),
-      quantity: item.quantity,
-      subtotal: Number(item.subtotal),
-      note: item.note,
-    })),
-  };
-};
-
-const createCustomerOrderSession = async ({ token, ipAddress, userAgent }) => {
+const getValidQrToken = async (token) => {
   const tokenHash = hashToken(token);
-
   const qrToken = await findValidQrTokenByHash(tokenHash);
 
   if (!qrToken) {
@@ -119,6 +89,18 @@ const createCustomerOrderSession = async ({ token, ipAddress, userAgent }) => {
       message: "QR token is invalid, expired, or revoked",
     });
   }
+
+  return qrToken;
+};
+
+const toPublicTableResponse = (table) => ({
+  id: table.id,
+  tableNumber: table.tableNumber,
+  label: table.label,
+});
+
+const createCustomerOrderSession = async ({ token, ipAddress, userAgent }) => {
+  const qrToken = await getValidQrToken(token);
 
   const rawOrderSessionToken = crypto.randomUUID();
   const sessionTokenHash = hashToken(rawOrderSessionToken);
@@ -142,11 +124,7 @@ const createCustomerOrderSession = async ({ token, ipAddress, userAgent }) => {
       token: rawOrderSessionToken,
       expiresAt: orderSession.expiresAt,
     },
-    table: {
-      id: qrToken.table.id,
-      tableNumber: qrToken.table.tableNumber,
-      label: qrToken.table.label,
-    },
+    table: toPublicTableResponse(qrToken.table),
   };
 };
 
@@ -158,17 +136,12 @@ export const validateQrToken = async ({ token, ipAddress, userAgent }) => {
   });
 };
 
-export const getPublicMenu = async ({ token, ipAddress, userAgent }) => {
-  const sessionResult = await createCustomerOrderSession({
-    token,
-    ipAddress,
-    userAgent,
-  });
-
+export const getPublicMenu = async ({ token }) => {
+  const qrToken = await getValidQrToken(token);
   const menuItems = await findPublicMenuItems();
 
   return {
-    ...sessionResult,
+    table: toPublicTableResponse(qrToken.table),
     categories: groupMenuItemsByCategory(menuItems),
   };
 };
@@ -274,6 +247,7 @@ export const submitCustomerOrder = async ({ payload, ipAddress, userAgent }) => 
         orderSessionId: session.id,
         status: "SUBMITTED",
         totalAmount,
+        customerName: payload.customerName,
         customerNote: payload.customerNote ?? null,
         submittedAt: now,
         orderItems: {
@@ -305,6 +279,7 @@ export const submitCustomerOrder = async ({ payload, ipAddress, userAgent }) => 
           orderNumber: createdOrder.orderNumber,
           tableId: createdOrder.tableId,
           tableNumber: session.table.tableNumber,
+          customerName: payload.customerName,
           totalAmount,
           itemCount: orderItemsData.length,
         },
@@ -314,5 +289,115 @@ export const submitCustomerOrder = async ({ payload, ipAddress, userAgent }) => 
     return createdOrder;
   });
 
-  return toOrderResponse(order);
+  return serializeOrderResponse(order);
+};
+
+const toPublicOrderItemResponse = (item) => ({
+  id: item.id,
+  menuItemId: item.menuItemId,
+  itemNameSnapshot: item.itemNameSnapshot,
+  categoryNameSnapshot: item.categoryNameSnapshot,
+  unitPriceSnapshot: Number(item.unitPriceSnapshot),
+  quantity: item.quantity,
+  subtotal: Number(item.subtotal),
+  note: item.note,
+});
+
+const toPublicTransactionResponse = (transaction) => {
+  if (!transaction) return null;
+
+  return {
+    id: transaction.id,
+    transactionNumber: transaction.transactionNumber,
+    paymentMethod: transaction.paymentMethod,
+    totalAmount: Number(transaction.totalAmount),
+    paidAmount: Number(transaction.paidAmount),
+    changeAmount: Number(transaction.changeAmount),
+    transactionTime: transaction.transactionTime,
+    cashier: transaction.cashier ?? null,
+    receipt: transaction.receipt
+      ? {
+          id: transaction.receipt.id,
+          receiptNumber: transaction.receipt.receiptNumber,
+          printStatus: transaction.receipt.printStatus,
+          printedAt: transaction.receipt.printedAt,
+          receiptPayload: transaction.receipt.receiptPayload,
+          createdAt: transaction.receipt.createdAt,
+        }
+      : null,
+  };
+};
+
+const toPublicOrderTrackingResponse = (order) => ({
+  id: order.id,
+  orderNumber: order.orderNumber,
+  tableId: order.tableId,
+  table: order.table
+    ? {
+        id: order.table.id,
+        tableNumber: order.table.tableNumber,
+        label: order.table.label,
+      }
+    : null,
+  status: order.status,
+  totalAmount: Number(order.totalAmount),
+  customerName: order.customerName,
+  customerNote: order.customerNote,
+  createdAt: order.createdAt,
+  submittedAt: order.submittedAt,
+  acceptedAt: order.acceptedAt,
+  servedAt: order.servedAt ?? null,
+  paidAt: order.paidAt,
+  cancelledAt: order.cancelledAt,
+  expiredAt: order.expiredAt,
+  orderItems: order.orderItems?.map(toPublicOrderItemResponse) ?? [],
+  statusHistories:
+    order.statusHistories?.map((history) => ({
+      id: history.id,
+      fromStatus: history.fromStatus,
+      toStatus: history.toStatus,
+      note: history.note,
+      createdAt: history.createdAt,
+    })) ?? [],
+  transaction: toPublicTransactionResponse(order.transaction),
+  receipt: order.transaction?.receipt
+    ? {
+        id: order.transaction.receipt.id,
+        receiptNumber: order.transaction.receipt.receiptNumber,
+        printStatus: order.transaction.receipt.printStatus,
+        printedAt: order.transaction.receipt.printedAt,
+        receiptPayload: order.transaction.receipt.receiptPayload,
+        createdAt: order.transaction.receipt.createdAt,
+      }
+    : null,
+});
+
+export const getCustomerOrderTracking = async ({
+  orderId,
+  orderSessionToken,
+}) => {
+  if (!orderSessionToken) {
+    throw new AppError({
+      statusCode: 401,
+      code: "ORDER_SESSION_TOKEN_REQUIRED",
+      message: "Order session token is required",
+    });
+  }
+
+  const sessionTokenHash = hashToken(orderSessionToken);
+
+  const order = await findPublicOrderBySession({
+    orderId,
+    sessionTokenHash,
+  });
+
+  if (!order) {
+    throw new AppError({
+      statusCode: 404,
+      code: "PUBLIC_ORDER_NOT_FOUND",
+      message: "Order not found or session token is invalid",
+    });
+  }
+
+  return toPublicOrderTrackingResponse(order);
 };

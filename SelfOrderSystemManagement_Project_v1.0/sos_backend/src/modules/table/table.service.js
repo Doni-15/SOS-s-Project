@@ -69,6 +69,7 @@ const toQrTokenResponse = (qrToken) => ({
   expiresAt: qrToken.expiresAt,
   createdAt: qrToken.createdAt,
   updatedAt: qrToken.updatedAt,
+  token: qrToken.tokenValue ?? undefined,
 });
 
 const ensureTableExists = async (id) => {
@@ -371,6 +372,7 @@ export const generateTableQrToken = async ({ tableId, payload, actor }) => {
       data: {
         tableId,
         tokenHash,
+        tokenValue: rawToken,
         expiresAt,
         isRevoked: false,
       },
@@ -405,7 +407,7 @@ export const generateTableQrToken = async ({ tableId, payload, actor }) => {
           revokeExistingActiveTokens: payload.revokeExistingActiveTokens,
           expiresAt,
           generatedBy: actor.username,
-          note: "Raw QR token is returned only once and is not stored in database.",
+          note: "QR token is stored so owner can re-display, copy, print, or download the active QR.",
         },
       },
     });
@@ -416,7 +418,7 @@ export const generateTableQrToken = async ({ tableId, payload, actor }) => {
   return {
     ...toQrTokenResponse(qrToken),
     token: rawToken,
-    note: "Raw QR token is shown only once. Generate a new token if this value is lost.",
+    note: "QR token is stored so owner can re-display, copy, print, or download the active QR.",
   };
 };
 

@@ -1,11 +1,14 @@
 import { z } from "zod";
 
+import { ORDER_STATUS_VALUES } from "../../common/constants/orderStatus.js";
+
 export const orderQuerySchema = z.object({
   status: z
-    .enum(["SUBMITTED", "ACCEPTED", "PAID", "CANCELLED", "EXPIRED"])
+    .enum(["SUBMITTED", "ACCEPTED", "SERVED", "PAID", "CANCELLED", "EXPIRED"])
     .optional(),
   tableNumber: z.string().trim().min(1).optional(),
-  limit: z.coerce.number().int().min(1).max(100).default(50),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
 });
 
 export const orderParamSchema = z.object({

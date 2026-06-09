@@ -2,15 +2,19 @@ import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
+import { env } from "./env.js";
 import { getRequestContext } from "../common/utils/requestContext.js";
 
 const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: env.databaseUrl,
 });
+
+const prismaLogLevels =
+  env.nodeEnv === "production" ? ["error", "warn"] : ["query", "error", "warn"];
 
 const basePrisma = new PrismaClient({
   adapter,
-  log: ["query", "error", "warn"],
+  log: prismaLogLevels,
 });
 
 export const prisma = basePrisma.$extends({

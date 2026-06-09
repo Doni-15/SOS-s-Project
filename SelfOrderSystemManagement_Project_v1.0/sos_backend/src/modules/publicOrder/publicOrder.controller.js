@@ -1,10 +1,13 @@
 import { successResponse } from "../../common/responses/apiResponse.js";
 import {
+  publicOrderParamSchema,
+  publicOrderTrackingQuerySchema,
   qrTokenQuerySchema,
   submitOrderSchema,
   validateQrTokenSchema,
 } from "./publicOrder.validation.js";
 import {
+  getCustomerOrderTracking,
   getPublicMenu,
   submitCustomerOrder,
   validateQrToken,
@@ -60,7 +63,32 @@ export const submitCustomerOrderController = async (req, res, next) => {
 
     return successResponse(res, {
       statusCode: 201,
-      message: "Order submitted successfully",
+      message: "Customer order submitted successfully",
+      data: {
+        order,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getCustomerOrderTrackingController = async (req, res, next) => {
+  try {
+    const params = publicOrderParamSchema.parse(req.params);
+    const query = publicOrderTrackingQuerySchema.parse(req.query);
+
+    const headerToken = req.headers["x-order-session-token"];
+    const orderSessionToken =
+      typeof headerToken === "string" ? headerToken : query.orderSessionToken;
+
+    const order = await getCustomerOrderTracking({
+      orderId: params.id,
+      orderSessionToken,
+    });
+
+    return successResponse(res, {
+      message: "Customer order tracking retrieved successfully",
       data: {
         order,
       },

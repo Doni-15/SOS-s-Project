@@ -11,7 +11,7 @@ import {
   useReceiptDetail,
   useTransactionDetail,
 } from "../../transactions/hooks/useTransactions";
-import { CashierReceiptPreview } from "../components/CashierReceiptPreview";
+import { ReceiptPreview } from "../../transactions/components/ReceiptPreview";
 import { CashierShell } from "../components/CashierShell";
 import {
   getReceiptId,
@@ -102,7 +102,7 @@ export function CashierReceiptPage() {
 
       {!isLoading && !isError && transaction ? (
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px] print:block">
-          <CashierReceiptPreview transaction={transaction} receipt={receipt} />
+          <ReceiptPreview transaction={transaction} receipt={receipt} />
 
           <aside className="space-y-5 print:hidden">
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

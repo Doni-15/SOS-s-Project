@@ -1,0 +1,67 @@
+========================================
+ Backend Production Readiness Doctor
+========================================
+
+== Core files ==
+OK   file exists: package.json
+OK   file exists: package-lock.json
+OK   file exists: .env.example
+OK   file exists: .gitignore
+OK   file exists: .dockerignore
+OK   file exists: Dockerfile
+OK   file exists: prisma/schema.prisma
+OK   file exists: prisma.config.ts
+OK   file exists: src/app.js
+OK   file exists: src/server.js
+
+== Important scripts ==
+OK   file exists: scripts/backup-db.sh
+OK   file exists: scripts/backup-uploads.sh
+OK   file exists: scripts/backup-all.sh
+OK   file exists: scripts/restore-db.sh
+OK   file exists: scripts/restore-uploads.sh
+OK   file exists: scripts/pre-push-review.sh
+OK   file exists: scripts/check-backend.sh
+
+== Runtime dirs ==
+OK   dir exists: public/uploads
+OK   dir exists: public/uploads/menu-items
+
+== Git forbidden files check ==
+OK   no forbidden local/generated files tracked
+
+== Duplicate module check ==
+OK   no duplicate user/report module
+
+== Package script consistency ==
+OK   npm script: dev
+OK   npm script: start
+OK   npm script: prisma:generate
+OK   npm script: prisma:migrate
+OK   npm script: prisma:studio
+OK   npm script: db:migrate:deploy
+OK   npm script: db:backup
+OK   npm script: uploads:backup
+OK   npm script: backup:all
+OK   npm script: db:restore
+OK   npm script: db:seed:menu
+OK   npm script: uploads:restore
+OK   npm script: check
+OK   npm script: check:backend
+OK   npm script: check:imports
+OK   npm script: check:serializers
+OK   npm script: check:service-mappers
+OK   npm script: check:repositories
+OK   npm script: check:runtime
+OK   npm script: check:api-smoke
+OK   npm script: check:access
+OK   npm script: check:qr-token
+OK   npm script: check:reports
+OK   npm script: check:transactions-report
+OK   npm script: check:cashier-orders
+OK   npm script: check:seed-menu
+OK   npm script: doctor
+
+========================================
+ Doctor passed
+========================================

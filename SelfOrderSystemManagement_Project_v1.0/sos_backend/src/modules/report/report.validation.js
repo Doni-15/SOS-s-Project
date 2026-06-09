@@ -7,10 +7,11 @@ const dateSchema = z
 export const reportPeriodQuerySchema = z.object({
   startDate: dateSchema.optional(),
   endDate: dateSchema.optional(),
+  period: z.enum(["daily", "weekly", "monthly"]).optional().default("daily"),
 });
 
-export const topMenuItemsQuerySchema = z.object({
-  startDate: dateSchema.optional(),
-  endDate: dateSchema.optional(),
+export const reportQuerySchema = reportPeriodQuerySchema;
+
+export const topMenuItemsQuerySchema = reportPeriodQuerySchema.extend({
   limit: z.coerce.number().int().min(1).max(100).default(10),
 });

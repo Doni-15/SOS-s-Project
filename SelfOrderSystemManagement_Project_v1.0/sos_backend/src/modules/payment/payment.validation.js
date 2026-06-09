@@ -11,7 +11,14 @@ export const createPaymentSchema = z.object({
   paymentMethod: z.enum(["CASH"]).default("CASH"),
 });
 
+const dateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must use YYYY-MM-DD format");
+
 export const transactionQuerySchema = z.object({
+  startDate: dateSchema.optional(),
+  endDate: dateSchema.optional(),
+  page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(50),
 });
 

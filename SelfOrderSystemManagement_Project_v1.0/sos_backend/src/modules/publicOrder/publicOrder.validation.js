@@ -25,6 +25,11 @@ export const submitOrderSchema = z
       .string()
       .trim()
       .min(1, "Order session token is required"),
+    customerName: z
+      .string()
+      .trim()
+      .min(1, "Customer name is required")
+      .max(100, "Customer name is too long"),
     customerNote: z
       .string()
       .trim()
@@ -48,3 +53,11 @@ export const submitOrderSchema = z
       });
     }
   });
+
+export const publicOrderParamSchema = z.object({
+  id: z.string().uuid("Order ID must be a valid UUID"),
+});
+
+export const publicOrderTrackingQuerySchema = z.object({
+  orderSessionToken: z.string().trim().min(10).optional(),
+});

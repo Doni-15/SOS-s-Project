@@ -19,6 +19,7 @@ enum AvailabilityStatus {
 enum OrderStatus {
   SUBMITTED
   ACCEPTED
+  SERVED
   PAID
   CANCELLED
   EXPIRED
@@ -112,8 +113,9 @@ model DiningTable {
 model QrToken {
   id        String    @id @default(uuid()) @db.Uuid
   tableId   String    @map("table_id") @db.Uuid
-  tokenHash String    @unique @map("token_hash") @db.VarChar(255)
-  isRevoked Boolean   @default(false) @map("is_revoked")
+  tokenHash  String    @unique @map("token_hash") @db.VarChar(255)
+  tokenValue String?   @map("token_value") @db.VarChar(255)
+  isRevoked  Boolean   @default(false) @map("is_revoked")
   expiresAt DateTime? @map("expires_at")
   revokedAt DateTime? @map("revoked_at")
   createdAt DateTime  @default(now()) @map("created_at")
@@ -193,11 +195,13 @@ model Order {
   acceptedByUserId String?     @map("accepted_by_user_id") @db.Uuid
   status           OrderStatus @default(SUBMITTED)
   totalAmount      Decimal     @map("total_amount") @db.Decimal(12, 2)
+  customerName     String?     @map("customer_name") @db.VarChar(100)
   customerNote     String?     @map("customer_note") @db.Text
   version          Int         @default(1)
   createdAt        DateTime    @default(now()) @map("created_at")
   submittedAt      DateTime    @default(now()) @map("submitted_at")
   acceptedAt       DateTime?   @map("accepted_at")
+  servedAt         DateTime?   @map("served_at")
   cancelledAt      DateTime?   @map("cancelled_at")
   expiredAt        DateTime?   @map("expired_at")
   paidAt           DateTime?   @map("paid_at")

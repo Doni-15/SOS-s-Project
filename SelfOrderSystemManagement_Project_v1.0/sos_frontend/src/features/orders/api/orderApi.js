@@ -5,6 +5,11 @@ function unwrapApiData(response) {
   return response?.data ?? response;
 }
 
+function unwrapOrder(response) {
+  const data = unwrapApiData(response);
+  return data?.order ?? data ?? null;
+}
+
 export const orderApi = {
   async getOrders(params = {}) {
     const response = await apiClient.get(ORDER_ENDPOINTS.list, { params });
@@ -15,16 +20,17 @@ export const orderApi = {
 
   async getOrderById(id) {
     const response = await apiClient.get(ORDER_ENDPOINTS.detail(id));
-    const data = unwrapApiData(response);
-
-    return data?.order ?? null;
+    return unwrapOrder(response);
   },
 
   async acceptOrder(id) {
     const response = await apiClient.patch(ORDER_ENDPOINTS.accept(id));
-    const data = unwrapApiData(response);
+    return unwrapOrder(response);
+  },
 
-    return data?.order ?? null;
+  async markOrderServed(id) {
+    const response = await apiClient.patch(ORDER_ENDPOINTS.served(id));
+    return unwrapOrder(response);
   },
 
   async cancelOrder({ id, note }) {
@@ -32,8 +38,6 @@ export const orderApi = {
       note: note || null,
     });
 
-    const data = unwrapApiData(response);
-
-    return data?.order ?? null;
+    return unwrapOrder(response);
   },
 };

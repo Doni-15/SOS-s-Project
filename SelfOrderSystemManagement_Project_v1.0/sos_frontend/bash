@@ -1,0 +1,47 @@
+========================================
+ Frontend Production Readiness Doctor
+========================================
+
+== Core files ==
+OK   file exists: package.json
+OK   file exists: package-lock.json
+OK   file exists: index.html
+OK   file exists: .env.example
+OK   file exists: .gitignore
+OK   file exists: src/main.jsx
+OK   file exists: src/routes/AppRoutes.jsx
+OK   file exists: src/shared/api/apiClient.js
+
+== Feature directories ==
+OK   dir exists: src/features
+OK   dir exists: src/features/auth
+OK   dir exists: src/features/orders
+OK   dir exists: src/features/cashier
+OK   dir exists: src/features/owner
+OK   dir exists: src/features/customer
+
+== Git forbidden files check ==
+OK   no forbidden local/generated files tracked
+
+== Package script consistency ==
+OK   npm script: dev
+OK   npm script: build
+OK   npm script: lint
+OK   npm script: preview
+OK   npm script: check
+OK   npm script: check:frontend
+OK   npm script: check:imports
+OK   npm script: check:api
+OK   npm script: check:customer
+OK   npm script: check:owner-qr
+OK   npm script: check:owner-qr-click
+OK   npm script: check:cashier
+OK   npm script: check:cashier-payment
+OK   npm script: check:routes
+OK   npm script: check:bundle
+OK   npm script: check:runtime
+OK   npm script: doctor
+
+========================================
+ Doctor passed
+========================================

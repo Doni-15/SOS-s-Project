@@ -1,4 +1,5 @@
 import { prisma } from "../../config/prisma.js";
+import { ORDER_RESPONSE_INCLUDE } from "../../common/repositories/order.includes.js";
 
 export const findValidQrTokenByHash = async (tokenHash) => {
   return prisma.qrToken.findFirst({
@@ -90,5 +91,20 @@ export const findMenuItemsByIds = async (menuItemIds) => {
     include: {
       category: true,
     },
+  });
+};
+
+export const findPublicOrderBySession = async ({
+  orderId,
+  sessionTokenHash,
+}) => {
+  return prisma.order.findFirst({
+    where: {
+      id: orderId,
+      orderSession: {
+        sessionTokenHash,
+      },
+    },
+    include: ORDER_RESPONSE_INCLUDE,
   });
 };

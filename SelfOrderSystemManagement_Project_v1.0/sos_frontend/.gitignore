@@ -38,3 +38,9 @@ test-results/
 
 # Local patch backups
 .patch-backups/
+
+# Local review / stabilization files
+.stabilize-backups/
+frontend_review_*.txt
+frontend_env_keys_redacted.txt
+export_frontend_for_review.sh

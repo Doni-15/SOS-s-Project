@@ -23,9 +23,11 @@ apiClient.interceptors.response.use(
   (response) => response.data,
   (error) => {
     const normalizedError = normalizeApiError(error);
-    const isLoginRequest = error.config?.url?.includes("/auth/login");
+    const requestUrl = error.config?.url ?? "";
+    const isLoginRequest = requestUrl.includes("/auth/login");
+    const isPublicRequest = requestUrl.includes("/public/");
 
-    if (normalizedError.status === 401 && !isLoginRequest) {
+    if (normalizedError.status === 401 && !isLoginRequest && !isPublicRequest) {
       authStorage.clearSession();
 
       if (window.location.pathname !== ROUTES.login) {
