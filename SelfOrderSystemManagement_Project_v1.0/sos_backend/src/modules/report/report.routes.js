@@ -13,10 +13,9 @@ import {
 const router = express.Router();
 
 router.use(authenticate);
-router.use(authorizeRoles("OWNER"));
 
-router.get("/sales-summary", getSalesSummaryController);
-router.get("/daily-sales", getDailySalesController);
-router.get("/top-menu-items", getTopMenuItemsController);
+router.get("/sales-summary", authorizeRoles("OWNER"), getSalesSummaryController);
+router.get("/daily-sales", authorizeRoles("OWNER"), getDailySalesController);
+router.get("/top-menu-items", authorizeRoles("OWNER"), getTopMenuItemsController);
 
 export default router;

@@ -108,7 +108,6 @@ app.use("/api/auth", authRoutes);
 app.use("/api/internal", menuRoutes);
 app.use("/api/internal", internalOrderRoutes);
 app.use("/api/internal", paymentRoutes);
-app.use("/api/internal", reportRoutes);
 app.use("/api/internal", userRoutes);
 app.use("/api/internal", auditLogRoutes);
 app.use("/api/internal", tableRoutes);
