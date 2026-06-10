@@ -13,21 +13,10 @@ import {
 const router = express.Router();
 
 router.use(authenticate);
+router.use(authorizeRoles("OWNER"));
 
-router.get(
-  "/reports/sales-summary",
-  authorizeRoles("OWNER"),
-  getSalesSummaryController
-);
-router.get(
-  "/reports/daily-sales",
-  authorizeRoles("OWNER"),
-  getDailySalesController
-);
-router.get(
-  "/reports/top-menu-items",
-  authorizeRoles("OWNER"),
-  getTopMenuItemsController
-);
+router.get("/sales-summary", getSalesSummaryController);
+router.get("/daily-sales", getDailySalesController);
+router.get("/top-menu-items", getTopMenuItemsController);
 
 export default router;

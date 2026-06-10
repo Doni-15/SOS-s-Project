@@ -114,5 +114,7 @@ app.use("/api/internal", auditLogRoutes);
 app.use("/api/internal", tableRoutes);
 app.use("/api/internal", uploadRoutes);
 
+app.use("/api/reports", reportRoutes);
+
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
