@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+source "$SCRIPT_DIR/lib/path-safety.sh"
+
 POSTGRES_DOCKER_IMAGE="${POSTGRES_DOCKER_IMAGE:-postgres:16-alpine}"
 BACKUP_FILE="${1:-}"
 
@@ -9,10 +12,9 @@ if [ -z "$BACKUP_FILE" ]; then
   exit 1
 fi
 
-if [ ! -f "$BACKUP_FILE" ]; then
-  echo "Backup file not found: $BACKUP_FILE"
-  exit 1
-fi
+BACKUP_ABS_FILE="$(canonical_existing_file "$BACKUP_FILE")"
+BACKUP_ABS_DIR="$(dirname -- "$BACKUP_ABS_FILE")"
+BACKUP_FILE_NAME="$(basename -- "$BACKUP_ABS_FILE")"
 
 read_env_value() {
   node -e '
@@ -90,9 +92,6 @@ if [ "$CONFIRMATION" != "RESTORE" ]; then
   exit 1
 fi
 
-BACKUP_ABS_FILE="$(cd "$(dirname "$BACKUP_FILE")" && pwd)/$(basename "$BACKUP_FILE")"
-BACKUP_FILE_NAME="$(basename "$BACKUP_FILE")"
-
 if command -v pg_restore >/dev/null 2>&1; then
   echo "[INFO] Using local pg_restore"
 
@@ -103,16 +102,24 @@ if command -v pg_restore >/dev/null 2>&1; then
     --no-owner \
     --no-privileges \
     --verbose \
-    "$BACKUP_FILE"
+    "$BACKUP_ABS_FILE"
 
 elif command -v docker >/dev/null 2>&1; then
+  require_safe_image_reference "$POSTGRES_DOCKER_IMAGE"
   echo "[INFO] Local pg_restore not found. Using Docker image: $POSTGRES_DOCKER_IMAGE"
 
   docker run --rm \
     -e PG_DATABASE_URL="$PG_DATABASE_URL" \
-    -v "$BACKUP_ABS_FILE:/restore/$BACKUP_FILE_NAME:ro" \
+    -v "$BACKUP_ABS_DIR:/restore:ro" \
     "$POSTGRES_DOCKER_IMAGE" \
-    sh -c 'pg_restore --dbname="$PG_DATABASE_URL" --clean --if-exists --no-owner --no-privileges --verbose "/restore/'"$BACKUP_FILE_NAME"'"'
+    pg_restore \
+    --dbname="$PG_DATABASE_URL" \
+    --clean \
+    --if-exists \
+    --no-owner \
+    --no-privileges \
+    --verbose \
+    "/restore/$BACKUP_FILE_NAME"
 
 else
   echo "Neither pg_restore nor docker is available."

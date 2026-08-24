@@ -1,13 +1,12 @@
 import { successResponse } from "../../common/responses/apiResponse.js";
+import { env } from "../../config/env.js";
 import { saveMenuImage } from "./upload.service.js";
 
 export const uploadMenuImageController = async (req, res, next) => {
   try {
-    const baseUrl = `${req.protocol}://${req.get("host")}`;
-
     const image = await saveMenuImage({
       file: req.file,
-      baseUrl,
+      baseUrl: env.publicBaseUrl,
     });
 
     return successResponse(res, {

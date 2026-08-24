@@ -32,6 +32,8 @@ public/uploads/
 
 # Private academic/internal documents
 docs/
+!sos_backend/docs/
+!sos_backend/docs/*.md
 *.docx
 *.pdf
 *.pptx
