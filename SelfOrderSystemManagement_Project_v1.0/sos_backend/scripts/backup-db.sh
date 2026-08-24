@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+source "$SCRIPT_DIR/lib/path-safety.sh"
+
 BACKUP_DIR="${BACKUP_DIR:-backups}"
 POSTGRES_DOCKER_IMAGE="${POSTGRES_DOCKER_IMAGE:-postgres:16-alpine}"
 
-mkdir -p "$BACKUP_DIR"
+BACKUP_ABS_DIR="$(canonical_non_root_directory "$BACKUP_DIR")"
 
 read_env_value() {
   node -e '
@@ -71,6 +74,7 @@ try {
 
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
 BACKUP_NAME="${BACKUP_NAME:-sos-db-$TIMESTAMP}"
+require_safe_backup_name "$BACKUP_NAME"
 BACKUP_FILE="$BACKUP_DIR/$BACKUP_NAME.dump"
 META_FILE="$BACKUP_FILE.json"
 
@@ -84,8 +88,7 @@ echo "Format     : custom pg_dump"
 echo "Started at : $(date -Is)"
 echo "============================================================"
 
-BACKUP_ABS_DIR="$(cd "$BACKUP_DIR" && pwd)"
-BACKUP_FILE_NAME="$(basename "$BACKUP_FILE")"
+BACKUP_FILE_NAME="$(basename -- "$BACKUP_FILE")"
 
 if command -v pg_dump >/dev/null 2>&1; then
   echo "[INFO] Using local pg_dump"
@@ -101,13 +104,22 @@ if command -v pg_dump >/dev/null 2>&1; then
     --file="$BACKUP_FILE"
 
 elif command -v docker >/dev/null 2>&1; then
+  require_safe_image_reference "$POSTGRES_DOCKER_IMAGE"
   echo "[INFO] Local pg_dump not found. Using Docker image: $POSTGRES_DOCKER_IMAGE"
 
   docker run --rm \
     -e PG_DATABASE_URL="$PG_DATABASE_URL" \
     -v "$BACKUP_ABS_DIR:/backups" \
     "$POSTGRES_DOCKER_IMAGE" \
-    sh -c 'pg_dump --dbname="$PG_DATABASE_URL" --schema=public --format=custom --blobs --no-owner --no-privileges --verbose --file="/backups/'"$BACKUP_FILE_NAME"'"'
+    pg_dump \
+    --dbname="$PG_DATABASE_URL" \
+    --schema=public \
+    --format=custom \
+    --blobs \
+    --no-owner \
+    --no-privileges \
+    --verbose \
+    --file="/backups/$BACKUP_FILE_NAME"
 
 else
   echo "Neither pg_dump nor docker is available."

@@ -181,17 +181,17 @@ assertIncludes({
 for (const route of [
   {
     method: "get",
-    path: "/reports/sales-summary",
+    path: "/sales-summary",
     controller: "getSalesSummaryController",
   },
   {
     method: "get",
-    path: "/reports/daily-sales",
+    path: "/daily-sales",
     controller: "getDailySalesController",
   },
   {
     method: "get",
-    path: "/reports/top-menu-items",
+    path: "/top-menu-items",
     controller: "getTopMenuItemsController",
   },
 ]) {

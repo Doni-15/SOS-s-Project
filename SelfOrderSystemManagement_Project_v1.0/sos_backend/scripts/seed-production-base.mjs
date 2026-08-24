@@ -1,22 +1,6 @@
 import { prisma } from "../src/config/prisma.js";
 import { hashPassword } from "../src/common/utils/password.js";
-
-const users = [
-  {
-    username: "owner",
-    password: "Owner@12345",
-    fullName: "Owner Kedai",
-    phone: "080000000001",
-    role: "OWNER",
-  },
-  {
-    username: "kasir",
-    password: "Kasir@12345",
-    fullName: "Kasir Kedai",
-    phone: "080000000002",
-    role: "CASHIER",
-  },
-];
+import { getBootstrapUsers } from "./lib/bootstrap-config.mjs";
 
 const tables = Array.from({ length: 12 }, (_, index) => {
   const number = index + 1;
@@ -63,20 +47,22 @@ const categories = [
   },
 ];
 
-async function seedUsers() {
+async function seedUsers(users) {
   for (const user of users) {
+    const existingUser = await prisma.user.findUnique({
+      where: { username: user.username },
+      select: { id: true },
+    });
+
+    if (existingUser) {
+      console.log(`${user.role} bootstrap account already exists; skipped`);
+      continue;
+    }
+
     const passwordHash = await hashPassword(user.password);
 
-    await prisma.user.upsert({
-      where: { username: user.username },
-      update: {
-        passwordHash,
-        fullName: user.fullName,
-        phone: user.phone,
-        role: user.role,
-        isActive: true,
-      },
-      create: {
+    await prisma.user.create({
+      data: {
         username: user.username,
         passwordHash,
         fullName: user.fullName,
@@ -85,6 +71,8 @@ async function seedUsers() {
         isActive: true,
       },
     });
+
+    console.log(`${user.role} bootstrap account created`);
   }
 }
 
@@ -161,12 +149,13 @@ async function printSummary() {
   };
 
   console.table(summary);
-  console.log("OWNER   username: owner | password: Owner@12345");
-  console.log("CASHIER username: kasir | password: Kasir@12345");
+  console.log("Bootstrap completed; credentials were not written to logs");
 }
 
 async function main() {
-  await seedUsers();
+  const users = getBootstrapUsers();
+
+  await seedUsers(users);
   await seedTables();
   await seedMenu();
   await printSummary();

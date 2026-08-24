@@ -102,7 +102,19 @@ app.get("/api/health/ready", async (req, res) => {
   }
 });
 
-app.use("/uploads", express.static("public/uploads", { maxAge: "7d" }));
+app.use(
+  "/uploads",
+  express.static("public/uploads", {
+    dotfiles: "deny",
+    index: false,
+    maxAge: "7d",
+    immutable: true,
+    redirect: false,
+    setHeaders: (res) => {
+      res.setHeader("X-Content-Type-Options", "nosniff");
+    },
+  })
+);
 app.use("/api/public", publicOrderRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/internal", menuRoutes);

@@ -143,7 +143,8 @@ Contoh konfigurasi local development:
     PASSWORD_SALT_ROUNDS=10
     TOKEN_HASH_SECRET="replace_with_minimum_32_characters_token_hash_secret"
     ORDER_SESSION_EXPIRES_MINUTES=30
-    CORS_ORIGIN="http://localhost:5173"
+CORS_ORIGIN="http://localhost:5173"
+PUBLIC_BASE_URL="http://localhost:5000"
 
 Catatan:
 
@@ -152,6 +153,8 @@ Catatan:
 - TOKEN_HASH_SECRET minimal 32 karakter.
 - CORS_ORIGIN sesuaikan dengan domain frontend.
 - DATABASE_URL harus mengarah ke database PostgreSQL yang benar.
+- PUBLIC_BASE_URL wajib berupa origin HTTPS canonical pada production.
+- NODE_ENV wajib diisi dengan `development`, `test`, atau `production`.
 
 ---
 
@@ -205,6 +208,29 @@ Start server:
 
     npm start
 
+Konfigurasi production bersifat fail-closed: `DATABASE_URL`, `JWT_SECRET`, `TOKEN_HASH_SECRET`, `CORS_ORIGIN`, dan `PUBLIC_BASE_URL` harus tersedia. Docker image tidak membawa credential database atau secret aplikasi default.
+
+### Bootstrap akun awal
+
+Script bootstrap hanya dapat berjalan dengan `NODE_ENV=production`. Berikan credential sementara melalui environment saat eksekusi, bukan melalui source code atau image:
+
+```bash
+BOOTSTRAP_OWNER_USERNAME='<username-sementara>' \
+BOOTSTRAP_OWNER_PASSWORD='<secret-dari-secret-manager>' \
+BOOTSTRAP_CASHIER_USERNAME='<username-sementara>' \
+BOOTSTRAP_CASHIER_PASSWORD='<secret-dari-secret-manager>' \
+npm run db:seed:production-base
+```
+
+Aturan bootstrap:
+
+- keempat nilai bootstrap wajib tersedia saat runtime;
+- password minimal 16 karakter, berbeda untuk setiap role, dan tidak boleh memuat username;
+- password tidak pernah ditulis ke log;
+- akun yang sudah ada tidak ditimpa saat script dijalankan ulang;
+- setelah bootstrap, hapus variable sementara dan reset password melalui alur owner agar sesi lama ikut dicabut.
+- deployment yang pernah menjalankan seed lama wajib mereset password akun `OWNER` dan `CASHIER` sebelum diaktifkan kembali.
+
 ---
 
 ## NPM Scripts
@@ -252,6 +278,10 @@ Restore database dari file dump.
     npm run uploads:restore -- <file.tar.gz>
 
 Restore upload dari archive.
+
+    npm run test
+
+Menjalankan negative test untuk bootstrap, validasi isi upload, dan keamanan argument path backup/restore.
 
 ---
 
@@ -552,6 +582,9 @@ Untuk production yang memakai upload file, gunakan persistent volume:
 - Gunakan JWT_SECRET dan TOKEN_HASH_SECRET yang kuat.
 - Batasi CORS_ORIGIN ke domain frontend yang dipercaya.
 - Gunakan database production yang berbeda dari database development.
+- Jangan menggunakan header `Host` request untuk membentuk URL upload; set `PUBLIC_BASE_URL` secara eksplisit.
+- File gambar diperiksa berdasarkan magic bytes dan harus cocok dengan MIME type yang diizinkan.
+- Setiap restore tetap merupakan tindakan destructive dan harus dijalankan operator setelah memverifikasi target.
 
 ---
 
@@ -567,4 +600,3 @@ Backend juga sudah menyiapkan public order API untuk QR customer.
 Frontend internal owner dan cashier dapat memakai backend ini melalui:
 
     VITE_API_BASE_URL=http://localhost:5000/api
-

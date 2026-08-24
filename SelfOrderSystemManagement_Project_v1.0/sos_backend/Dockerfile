@@ -16,13 +16,14 @@ RUN npm config set registry https://registry.npmjs.org/ \
 COPY prisma ./prisma
 COPY prisma.config.ts ./
 
-ENV DATABASE_URL="postgresql://postgres:postgres@localhost:5432/postgres?schema=public"
-
-RUN npx prisma generate
+RUN DATABASE_URL="postgresql://localhost:5432/build_only?schema=public" \
+  npx prisma generate
 
 COPY src ./src
 
-RUN npm prune --omit=dev
+# Prisma CLI is an optional development peer of @prisma/client. It is not
+# needed by the runtime image and is excluded together with other dev tooling.
+RUN npm prune --omit=dev --omit=optional
 
 
 FROM node:22-alpine AS production

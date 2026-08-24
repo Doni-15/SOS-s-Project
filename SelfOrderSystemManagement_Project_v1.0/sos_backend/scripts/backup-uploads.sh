@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+source "$SCRIPT_DIR/lib/path-safety.sh"
+
 BACKUP_DIR="${BACKUP_DIR:-backups}"
 UPLOAD_DIR="${UPLOAD_DIR:-public/uploads}"
 
-mkdir -p "$BACKUP_DIR"
+canonical_non_root_directory "$BACKUP_DIR" >/dev/null
 
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
 BACKUP_NAME="${BACKUP_NAME:-sos-uploads-$TIMESTAMP}"
+require_safe_backup_name "$BACKUP_NAME"
 BACKUP_FILE="$BACKUP_DIR/$BACKUP_NAME.tar.gz"
 META_FILE="$BACKUP_FILE.json"
 
@@ -24,7 +28,7 @@ if [ ! -d "$UPLOAD_DIR" ]; then
   mkdir -p "$UPLOAD_DIR"
 fi
 
-tar -czf "$BACKUP_FILE" "$UPLOAD_DIR"
+tar -czf "$BACKUP_FILE" -- "$UPLOAD_DIR"
 
 if [ ! -s "$BACKUP_FILE" ]; then
   echo "Upload backup failed or file is empty: $BACKUP_FILE"
