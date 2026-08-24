@@ -133,6 +133,8 @@ RESTORE
 
 untuk melanjutkan.
 
+Path file diteruskan sebagai argument literal ke `pg_restore`, termasuk saat fallback Docker digunakan. Script tidak memakai `sh -c`, menolak control character pada path, dan aman untuk nama file yang memuat spasi, quote, atau shell metacharacter.
+
 ---
 
 ## 6. Restore Uploaded Files
@@ -160,6 +162,8 @@ RESTORE_UPLOADS
 ```
 
 untuk melanjutkan.
+
+Target restore tidak boleh berupa root filesystem. Script memakai ownership dan permission dari proses tujuan, bukan metadata owner/permission dari arsip.
 
 ---
 
@@ -275,4 +279,3 @@ Setelah restore:
 - [ ] Cek data utama.
 - [ ] Cek file upload dapat diakses.
 - [ ] Cek log error backend.
-

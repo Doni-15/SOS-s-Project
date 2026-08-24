@@ -1,6 +1,6 @@
 # Self-Order System Management
 
-Self-Order System Management adalah aplikasi web untuk mendukung proses pemesanan mandiri berbasis QR Code dan manajemen transaksi kasir pada usaha kuliner skala kecil hingga menengah.
+Self-Order System Management adalah project mata kuliah/kelompok untuk mempelajari aplikasi web pemesanan mandiri berbasis QR Code dan manajemen transaksi kasir.
 
 Repository ini menggunakan struktur **monorepo** yang memisahkan backend API dan frontend responsive web dalam satu root project.
 
@@ -11,7 +11,7 @@ SelfOrderSystemManagement_Project_v1.0/
 └── sos_frontend/
 ```
 
-> Repository ini difokuskan untuk **source code production/deployment**. Dokumen akademik internal seperti requirement document, design document, laporan, dan dokumen private review tidak dipublikasikan di repository.
+> Repository ini berisi source yang dapat dipelajari dan diuji secara lokal. Kesiapan production tetap memerlukan konfigurasi environment, deployment review, rotasi secret, backup, dan pengujian operasional.
 
 ---
 
@@ -386,6 +386,7 @@ TOKEN_HASH_SECRET="replace_with_minimum_32_characters_token_hash_secret"
 ORDER_SESSION_EXPIRES_MINUTES=30
 
 CORS_ORIGIN="http://localhost:5173"
+PUBLIC_BASE_URL="http://localhost:5000"
 ```
 
 Catatan:
@@ -394,6 +395,7 @@ Catatan:
 - Gunakan secret panjang dan random untuk production.
 - Gunakan database credential dari environment deployment untuk production.
 - Sesuaikan `CORS_ORIGIN` dengan URL frontend.
+- Set `PUBLIC_BASE_URL` ke origin HTTPS canonical backend pada production. URL ini digunakan untuk link file upload dan tidak diambil dari header request.
 
 ---
 
@@ -962,4 +964,3 @@ Tidak dipublikasikan:
 ## 24. License and Usage
 
 Project ini dibuat untuk kebutuhan pengembangan sistem Self-Order System Management. Penggunaan, distribusi, dan deployment mengikuti kebijakan tim/project owner.
-
